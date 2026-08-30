@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Centered elegant dark coin circle -->
+    <path
+        android:fillColor="#1C1B1F"
+        android:pathData="M54,54m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+        
+    <!-- Perfectly centered Dollar sign vector paths -->
+    <!-- Vertical stroke -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D0BCFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,40 L54,68" />
+        
+    <!-- S-curve for Dollar symbol -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D0BCFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M59,47 C59,42.5 49,42.5 49,48 C49,53 59,51.5 59,57 C59,62 49,62 49,58" />
+</vector>

@@ -1,0 +1,6 @@
+{
+  "name": "Kopilka",
+  "description": "A simple money saving and tracking assistant for incomes and expenses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
