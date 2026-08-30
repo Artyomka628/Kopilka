@@ -2,6 +2,7 @@ package com.example.ui
 
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -9,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.model.KopilkaData
+import com.example.model.CloudData
 import com.example.model.Transaction
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -65,13 +67,45 @@ enum class AppTheme(val key: String, val primaryColor: Color) {
 
 class KopilkaViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val prefs = application.getSharedPreferences("kopilka_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences by lazy {
+        val application = getApplication<Application>()
+        val masterKey = androidx.security.crypto.MasterKey.Builder(application)
+            .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+            .build()
+            
+        val encrypted = androidx.security.crypto.EncryptedSharedPreferences.create(
+            application,
+            "kopilka_prefs_encrypted",
+            masterKey,
+            androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        
+        val oldPrefs = application.getSharedPreferences("kopilka_prefs", Context.MODE_PRIVATE)
+        if (oldPrefs.all.isNotEmpty()) {
+            val editor = encrypted.edit()
+            for ((key, value) in oldPrefs.all) {
+                when (value) {
+                    is Boolean -> editor.putBoolean(key, value)
+                    is Float -> editor.putFloat(key, value)
+                    is Int -> editor.putInt(key, value)
+                    is Long -> editor.putLong(key, value)
+                    is String -> editor.putString(key, value)
+                    is Set<*> -> editor.putStringSet(key, value as Set<String>)
+                }
+            }
+            editor.apply()
+            oldPrefs.edit().clear().apply()
+        }
+        encrypted
+    }
 
     private val moshi = Moshi.Builder()
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
     private val dataAdapter = moshi.adapter(KopilkaData::class.java)
+    private val cloudDataAdapter = moshi.adapter(CloudData::class.java)
     private val transactionsAdapter = moshi.adapter<List<Transaction>>(
         Types.newParameterizedType(List::class.java, Transaction::class.java)
     )
@@ -739,20 +773,43 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 syncTimeoutJob?.cancel()
                 viewModelScope.launch(Dispatchers.IO) {
                     try {
-                        val remoteBalance = document.getDouble("balance") ?: 0.0
-                        val remoteGoal = document.getDouble("goal") ?: 0.0
-                        val remoteDeletedList = document.get("deletedTxIds") as? List<String> ?: emptyList()
-                        val remoteDeleted = remoteDeletedList.toSet()
-                        
-                        val txMaps = document.get("transactions") as? List<Map<String, Any>> ?: emptyList()
-                        val remoteTxs = txMaps.mapNotNull { map ->
-                            val id = map["id"] as? String ?: return@mapNotNull null
-                            val timestamp = (map["timestamp"] as? Number)?.toLong() ?: return@mapNotNull null
-                            val reason = map["reason"] as? String ?: return@mapNotNull null
-                            val amount = (map["amount"] as? Number)?.toDouble() ?: return@mapNotNull null
-                            Transaction(id, timestamp, reason, amount)
+                        val encryptedPayload = document.getString("encrypted_payload")
+                        var remoteBalance = 0.0
+                        var remoteGoal = 0.0
+                        var remoteDeletedList = emptyList<String>()
+                        var remoteTxs = emptyList<Transaction>()
+
+                        if (encryptedPayload != null) {
+                            val decryptedJson = CryptoManager.decrypt(encryptedPayload, userId)
+                            if (decryptedJson != null) {
+                                try {
+                                    val cloudData = cloudDataAdapter.fromJson(decryptedJson)
+                                    if (cloudData != null) {
+                                        remoteBalance = cloudData.balance
+                                        remoteGoal = cloudData.goal
+                                        remoteDeletedList = cloudData.deletedTxIds
+                                        remoteTxs = cloudData.transactions
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("Sync", "Error parsing decrypted payload", e)
+                                }
+                            }
+                        } else {
+                            remoteBalance = document.getDouble("balance") ?: 0.0
+                            remoteGoal = document.getDouble("goal") ?: 0.0
+                            remoteDeletedList = document.get("deletedTxIds") as? List<String> ?: emptyList()
+                            
+                            val txMaps = document.get("transactions") as? List<Map<String, Any>> ?: emptyList()
+                            remoteTxs = txMaps.mapNotNull { map ->
+                                val id = map["id"] as? String ?: return@mapNotNull null
+                                val timestamp = (map["timestamp"] as? Number)?.toLong() ?: return@mapNotNull null
+                                val reason = map["reason"] as? String ?: return@mapNotNull null
+                                val amount = (map["amount"] as? Number)?.toDouble() ?: return@mapNotNull null
+                                Transaction(id, timestamp, reason, amount)
+                            }
                         }
                         
+                        val remoteDeleted = remoteDeletedList.toSet()
                         val localDeleted = _deletedTxIds.value
                         val mergedDeleted = localDeleted + remoteDeleted
                         
@@ -801,19 +858,28 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         deletedIds: Set<String>
     ) {
         val db = FirebaseManager.getFirestore() ?: return
-        val data = mapOf(
-            "balance" to balance,
-            "goal" to goal,
-            "deletedTxIds" to deletedIds.toList(),
-            "transactions" to transactions.map { tx ->
-                mapOf(
-                    "id" to tx.id,
-                    "timestamp" to tx.timestamp,
-                    "reason" to tx.reason,
-                    "amount" to tx.amount
-                )
-            }
-        )
+        
+        val cloudData = CloudData(balance, goal, transactions, deletedIds.toList())
+        val jsonStr = cloudDataAdapter.toJson(cloudData)
+        val encryptedPayload = CryptoManager.encrypt(jsonStr, userId)
+        
+        val data = if (encryptedPayload != null) {
+            mapOf("encrypted_payload" to encryptedPayload)
+        } else {
+            mapOf(
+                "balance" to balance,
+                "goal" to goal,
+                "deletedTxIds" to deletedIds.toList(),
+                "transactions" to transactions.map { tx ->
+                    mapOf(
+                        "id" to tx.id,
+                        "timestamp" to tx.timestamp,
+                        "reason" to tx.reason,
+                        "amount" to tx.amount
+                    )
+                }
+            )
+        }
         
         db.collection("users").document(userId).set(data)
             .addOnSuccessListener {

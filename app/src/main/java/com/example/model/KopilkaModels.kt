@@ -16,3 +16,11 @@ data class KopilkaData(
     val goal: Double,
     val transactions: List<Transaction>
 )
+
+@JsonClass(generateAdapter = true)
+data class CloudData(
+    val balance: Double,
+    val goal: Double,
+    val transactions: List<Transaction>,
+    val deletedTxIds: List<String>
+)
