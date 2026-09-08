@@ -423,6 +423,9 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     fun setGoal(amount: Double) {
         _goal.value = Math.round(amount * 100.0) / 100.0
         saveToPrefs()
+        if (FirebaseManager.isUserSignedIn()) {
+            syncData()
+        }
     }
 
     fun setBalance(amount: Double) {
@@ -440,12 +443,18 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             if (_transactions.value.isEmpty()) {
                 _balance.value = roundedAmount
                 saveToPrefs()
+                if (FirebaseManager.isUserSignedIn()) {
+                    syncData()
+                }
             } else {
                 addTransaction(diff, reasonStr)
             }
         } else {
             _balance.value = roundedAmount
             saveToPrefs()
+            if (FirebaseManager.isUserSignedIn()) {
+                syncData()
+            }
         }
     }
 
