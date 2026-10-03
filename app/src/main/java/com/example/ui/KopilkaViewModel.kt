@@ -513,7 +513,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         return "$sign$value"
     }
 
-    fun addTransaction(amount: Double, reason: String) {
+    fun addTransaction(amount: Double, reason: String, category: String? = null) {
         val roundedAmount = Math.round(amount * 100.0) / 100.0
         val newTx = Transaction(
             id = UUID.randomUUID().toString(),
@@ -521,7 +521,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             reason = reason.trim().ifEmpty { 
                 if (_selectedLanguage.value == AppLanguage.RU) "Без описания" else "No description"
             },
-            amount = roundedAmount
+            amount = roundedAmount,
+            category = category
         )
         val updatedList = listOf(newTx) + _transactions.value // Prepend to list to display newest first
         _transactions.value = updatedList
@@ -814,7 +815,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                                 val timestamp = (map["timestamp"] as? Number)?.toLong() ?: return@mapNotNull null
                                 val reason = map["reason"] as? String ?: return@mapNotNull null
                                 val amount = (map["amount"] as? Number)?.toDouble() ?: return@mapNotNull null
-                                Transaction(id, timestamp, reason, amount)
+                                val category = map["category"] as? String
+                                Transaction(id, timestamp, reason, amount, category)
                             }
                         }
                         
@@ -884,7 +886,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                         "id" to tx.id,
                         "timestamp" to tx.timestamp,
                         "reason" to tx.reason,
-                        "amount" to tx.amount
+                        "amount" to tx.amount,
+                        "category" to (tx.category ?: "")
                     )
                 }
             )

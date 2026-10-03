@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.model.Transaction
+import com.example.model.ExpenseCategory
 import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -758,20 +759,33 @@ fun TransactionItemRow(
     val amountColor = if (isIncome) ColorTopUp else ColorSpend
 
     val isStatsReset = tx.reason.startsWith("Статистика за") || tx.reason.startsWith("Statistics for")
-    
+    val isCancel = tx.reason.contains("Отмена") || tx.reason.contains("Cancellation")
+    val isRecalc = tx.reason.contains("Перерасчёт") || tx.reason.contains("Recalculation")
+
+    val expenseCategory = if (!isIncome && !isStatsReset && !isCancel && !isRecalc) {
+        ExpenseCategory.fromId(tx.category)
+    } else null
+
     val displayReason: String
     val displaySubText: String
     if (isStatsReset && tx.reason.contains("|")) {
         val parts = tx.reason.split("|")
         displayReason = parts[0]
         displaySubText = parts[1]
+    } else if (expenseCategory != null) {
+        val catTitle = expenseCategory.getTitle(lang)
+        val noDesc = tx.reason.isEmpty() || tx.reason == "Без описания" || tx.reason == "No description"
+        if (noDesc && tx.category != null) {
+            displayReason = catTitle
+            displaySubText = dateStr
+        } else {
+            displayReason = tx.reason
+            displaySubText = "$catTitle • $dateStr"
+        }
     } else {
         displayReason = tx.reason
         displaySubText = dateStr
     }
-
-    val isCancel = tx.reason.contains("Отмена") || tx.reason.contains("Cancellation")
-    val isRecalc = tx.reason.contains("Перерасчёт") || tx.reason.contains("Recalculation")
 
     val iconBgColor = when {
         isStatsReset -> Color(0xFFC5CAE9)
@@ -794,7 +808,8 @@ fun TransactionItemRow(
         isCancel -> Icons.AutoMirrored.Filled.Undo
         isRecalc -> Icons.Default.CompareArrows
         isIncome -> Icons.AutoMirrored.Filled.TrendingUp
-        else -> Icons.AutoMirrored.Filled.TrendingDown
+        expenseCategory != null -> expenseCategory.icon
+        else -> ExpenseCategory.OTHER.icon
     }
 
     val iconRotation = 0f
@@ -2116,13 +2131,17 @@ fun SettingsSheetContent(
 fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
     var amountText by remember { mutableStateOf("") }
     var reasonText by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(ExpenseCategory.OTHER) }
+
+    val categories = remember { ExpenseCategory.values().toList() }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
             text = LanguageHelper.getString("btnSpend", lang),
@@ -2130,7 +2149,7 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                 fontWeight = FontWeight.Bold,
                 color = ElegantTextPrimary
             ),
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(bottom = 2.dp)
         )
 
         OutlinedTextField(
@@ -2168,7 +2187,104 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             shape = RoundedCornerShape(12.dp)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // Category selection label
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = LanguageHelper.getString("category", lang),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = ElegantTextPrimary
+                )
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(ColorSpend.copy(alpha = 0.2f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Icon(
+                    imageVector = selectedCategory.icon,
+                    contentDescription = null,
+                    tint = ColorSpend,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = selectedCategory.getTitle(lang),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = ElegantTextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
+
+        // Categories Grid
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            categories.chunked(4).forEach { rowCats ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowCats.forEach { category ->
+                        val isSelected = selectedCategory == category
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(70.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) ColorSpend.copy(alpha = 0.2f) else ElegantDarkBg)
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) ColorSpend else ElegantHeaderBg,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { selectedCategory = category }
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = category.icon,
+                                    contentDescription = category.getTitle(lang),
+                                    tint = if (isSelected) ColorSpend else ElegantTextPrimary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = category.getTitle(lang),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.sp,
+                                        lineHeight = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) ElegantTextPrimary else ElegantTextSecondary
+                                    ),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                    for (i in 0 until (4 - rowCats.size)) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
 
         Row(
             modifier = Modifier
@@ -2184,7 +2300,7 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     } else if (amt > 1_000_000_000.0) {
                         viewModel.showToast(LanguageHelper.getString("amountTooLarge", lang))
                     } else {
-                        viewModel.addTransaction(-amt, reasonText)
+                        viewModel.addTransaction(-amt, reasonText, selectedCategory.id)
                         viewModel.hideSheet()
                     }
                 },

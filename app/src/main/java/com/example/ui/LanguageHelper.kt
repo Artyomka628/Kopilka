@@ -95,7 +95,9 @@ object LanguageHelper {
         "upToDate" to "You have the latest version!",
         "downloadUpdate" to "Download Update",
         "checkingUpdates" to "Checking for updates...",
-        "errorCheckingUpdates" to "Error checking for updates"
+        "errorCheckingUpdates" to "Error checking for updates",
+        "category" to "Category",
+        "selectCategory" to "Select Category"
     )
 
     private val ruStrings = mapOf(
@@ -187,7 +189,9 @@ object LanguageHelper {
         "upToDate" to "У вас установлена последняя версия",
         "downloadUpdate" to "Скачать обновление",
         "checkingUpdates" to "Проверка обновлений...",
-        "errorCheckingUpdates" to "Ошибка проверки обновлений"
+        "errorCheckingUpdates" to "Ошибка проверки обновлений",
+        "category" to "Категория",
+        "selectCategory" to "Выберите категорию"
     )
 
     fun getString(key: String, language: AppLanguage): String {

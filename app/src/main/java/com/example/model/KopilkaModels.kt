@@ -7,7 +7,8 @@ data class Transaction(
     val id: String,
     val timestamp: Long,
     val reason: String,
-    val amount: Double
+    val amount: Double,
+    val category: String? = null
 )
 
 @JsonClass(generateAdapter = true)
