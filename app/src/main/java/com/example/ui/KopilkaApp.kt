@@ -2066,6 +2066,7 @@ fun SettingsSheetContent(
 
         // Clear History button with confirmation dialog
         var showClearConfirm by remember { mutableStateOf(false) }
+        var showAccountClearWarning by remember { mutableStateOf(false) }
 
         if (showClearConfirm) {
             AlertDialog(
@@ -2086,9 +2087,13 @@ fun SettingsSheetContent(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.clearHistory()
                             showClearConfirm = false
-                            viewModel.hideSheet()
+                            if (currentUserEmail != null) {
+                                showAccountClearWarning = true
+                            } else {
+                                viewModel.clearHistoryLocally()
+                                viewModel.hideSheet()
+                            }
                         }
                     ) {
                         Text(
@@ -2111,6 +2116,100 @@ fun SettingsSheetContent(
                 containerColor = ElegantCardBg,
                 titleContentColor = ElegantTextPrimary,
                 textContentColor = ElegantTextSecondary
+            )
+        }
+
+        if (showAccountClearWarning) {
+            AlertDialog(
+                onDismissRequest = { showAccountClearWarning = false },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = ColorSpend
+                        )
+                        Text(
+                            text = LanguageHelper.getString("accountClearWarningTitle", lang),
+                            color = ElegantTextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val emailDesc = if (currentUserEmail != null) " ($currentUserEmail)" else ""
+                        Text(
+                            text = if (lang == AppLanguage.RU)
+                                "Вы вошли в аккаунт$emailDesc. Ваша история синхронизирована с облаком. Выберите вариант очистки:"
+                            else
+                                "You are signed into your account$emailDesc. Your history is synced with the cloud. Choose how to clear:",
+                            color = ElegantTextSecondary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Option 1: Clear Everywhere
+                        Button(
+                            onClick = {
+                                viewModel.clearHistoryEverywhere()
+                                showAccountClearWarning = false
+                                viewModel.hideSheet()
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = ColorSpend),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = LanguageHelper.getString("clearEverywhere", lang),
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Option 2: Sign Out and Clear Locally
+                        Button(
+                            onClick = {
+                                viewModel.signOutAndClearLocally()
+                                showAccountClearWarning = false
+                                viewModel.hideSheet()
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = ElegantHeaderBg),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = LanguageHelper.getString("signOutAndClearLocally", lang),
+                                color = ElegantLavender,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Option 3: Cancel
+                        TextButton(
+                            onClick = { showAccountClearWarning = false },
+                            modifier = Modifier.fillMaxWidth().height(40.dp)
+                        ) {
+                            Text(
+                                text = LanguageHelper.getString("cancel", lang),
+                                color = ElegantTextPrimary
+                            )
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {},
+                containerColor = ElegantCardBg,
+                titleContentColor = ElegantTextPrimary,
+                textContentColor = ElegantTextSecondary,
+                shape = RoundedCornerShape(24.dp)
             )
         }
 

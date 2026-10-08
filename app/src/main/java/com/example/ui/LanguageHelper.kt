@@ -97,7 +97,11 @@ object LanguageHelper {
         "checkingUpdates" to "Checking for updates...",
         "errorCheckingUpdates" to "Error checking for updates",
         "category" to "Category",
-        "selectCategory" to "Select Category"
+        "selectCategory" to "Select Category",
+        "clearEverywhere" to "Clear everywhere",
+        "signOutAndClearLocally" to "Sign out and clear locally",
+        "accountClearWarningTitle" to "Warning: Account Logged In",
+        "accountClearWarningDesc" to "You are signed into your account. Your history is synced with the cloud. Choose how to clear:"
     )
 
     private val ruStrings = mapOf(
@@ -191,7 +195,11 @@ object LanguageHelper {
         "checkingUpdates" to "Проверка обновлений...",
         "errorCheckingUpdates" to "Ошибка проверки обновлений",
         "category" to "Категория",
-        "selectCategory" to "Выберите категорию"
+        "selectCategory" to "Выберите категорию",
+        "clearEverywhere" to "Очистить везде",
+        "signOutAndClearLocally" to "Выйти и очистить локально",
+        "accountClearWarningTitle" to "Внимание: вход в аккаунт",
+        "accountClearWarningDesc" to "Вы вошли в аккаунт. Ваша история синхронизирована с облаком. Выберите вариант очистки:"
     )
 
     fun getString(key: String, language: AppLanguage): String {

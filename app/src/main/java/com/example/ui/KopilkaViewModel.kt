@@ -458,7 +458,15 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun clearHistory() {
+    fun clearHistoryLocally() {
+        _transactions.value = emptyList()
+        _balance.value = 0.0
+        _unsyncedTxIds.value = emptySet()
+        _deletedTxIds.value = emptySet()
+        saveToPrefs()
+    }
+
+    fun clearHistoryEverywhere() {
         val allIds = _transactions.value.map { it.id }.toSet()
         _deletedTxIds.value = _deletedTxIds.value + allIds
         _unsyncedTxIds.value = _unsyncedTxIds.value + allIds
@@ -467,6 +475,25 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         saveToPrefs()
         if (FirebaseManager.isUserSignedIn()) {
             syncData()
+        }
+    }
+
+    fun signOutAndClearLocally() {
+        FirebaseManager.getAuth()?.signOut()
+        _currentUserEmail.value = null
+        _transactions.value = emptyList()
+        _balance.value = 0.0
+        _unsyncedTxIds.value = emptySet()
+        _deletedTxIds.value = emptySet()
+        saveToPrefs()
+        showToast(if (_selectedLanguage.value == AppLanguage.RU) "Вышли из аккаунта и очистили локально" else "Signed out and cleared locally")
+    }
+
+    fun clearHistory() {
+        if (FirebaseManager.isUserSignedIn()) {
+            clearHistoryEverywhere()
+        } else {
+            clearHistoryLocally()
         }
     }
 
@@ -671,6 +698,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 _currentUserEmail.value = result.user?.email
                 _authLoading.value = false
                 _authError.value = null
+                _deletedTxIds.value = emptySet()
+                _unsyncedTxIds.value = emptySet()
                 showToast(if (_selectedLanguage.value == AppLanguage.RU) "Успешный вход!" else "Success login!")
                 syncData()
             }
@@ -694,6 +723,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 _currentUserEmail.value = result.user?.email
                 _authLoading.value = false
                 _authError.value = null
+                _deletedTxIds.value = emptySet()
+                _unsyncedTxIds.value = emptySet()
                 showToast(if (_selectedLanguage.value == AppLanguage.RU) "Аккаунт создан!" else "Account created!")
                 syncData()
             }
@@ -718,6 +749,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 _currentUserEmail.value = result.user?.email
                 _authLoading.value = false
                 _authError.value = null
+                _deletedTxIds.value = emptySet()
+                _unsyncedTxIds.value = emptySet()
                 showToast(if (_selectedLanguage.value == AppLanguage.RU) "Успешный вход через Google!" else "Success login via Google!")
                 syncData()
             }
@@ -731,6 +764,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         FirebaseManager.getAuth()?.signOut()
         _currentUserEmail.value = null
         _unsyncedTxIds.value = emptySet()
+        _deletedTxIds.value = emptySet()
         saveToPrefs()
         showToast(if (_selectedLanguage.value == AppLanguage.RU) "Вышли из аккаунта" else "Signed out")
     }
