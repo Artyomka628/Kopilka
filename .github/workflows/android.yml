@@ -53,10 +53,16 @@ jobs:
       - name: Determine build type
         id: build_type
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BUILD_TYPE: ${{ inputs.build_type }}
+          GIT_REF: ${{ github.ref }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            BUILD_TYPE="${{ github.event.inputs.build_type }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            BUILD_TYPE="$INPUT_BUILD_TYPE"
+          elif [[ "$EVENT_NAME" == "pull_request" ]]; then
+            BUILD_TYPE="debug"
+          elif [[ "$GIT_REF" == refs/tags/v* ]]; then
             BUILD_TYPE="release"
           else
             BUILD_TYPE="debug"
@@ -64,7 +70,27 @@ jobs:
           echo "build_type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
           echo "Build type: $BUILD_TYPE"
 
+      - name: Create temporary signing key for pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -v \
+            -keystore "$GITHUB_WORKSPACE/pr-debug.keystore" \
+            -storepass "temporary-pr-password" \
+            -alias "pr-debug" \
+            -keypass "temporary-pr-password" \
+            -keyalg RSA -keysize 2048 -validity 2 \
+            -dname "CN=Pull Request Debug,O=Kopilka,C=XX"
+          chmod 600 "$GITHUB_WORKSPACE/pr-debug.keystore"
+          {
+            echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/pr-debug.keystore"
+            echo "STORE_PASSWORD=temporary-pr-password"
+            echo "KEY_ALIAS=pr-debug"
+            echo "KEY_PASSWORD=temporary-pr-password"
+          } >> "$GITHUB_ENV"
+
       - name: Decode signing keystore
+        if: github.event_name != 'pull_request'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -81,28 +107,29 @@ jobs:
           test -s release.jks
           chmod 600 release.jks
 
-          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/release.jks" >> "$GITHUB_ENV"
+          {
+            echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/release.jks"
+            echo "STORE_PASSWORD=$STORE_PASSWORD"
+            echo "KEY_ALIAS=$KEY_ALIAS"
+            echo "KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
 
       - name: Write build info
+        env:
+          COMMIT_HASH: ${{ github.sha }}
         run: |
-          COMMIT_HASH="${{ github.sha }}"
           BUILD_TIME="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           mkdir -p app/src/main/java/com/example
           printf '%s\n' \
             'package com.example' \
             '' \
             'object BuildInfo {' \
-            "    const val COMMIT_HASH: String = \"${COMMIT_HASH}\"" \
-            "    const val BUILD_TIME: String = \"${BUILD_TIME}\"" \
+            "    const val COMMIT_HASH: String = \"$COMMIT_HASH\"" \
+            "    const val BUILD_TIME: String = \"$BUILD_TIME\"" \
             '}' > app/src/main/java/com/example/BuildInfo.kt
 
       - name: Build debug APK
         if: steps.build_type.outputs.build_type == 'debug' || steps.build_type.outputs.build_type == 'both'
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.jks
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew --no-daemon :app:assembleDebug
 
       - name: Upload debug APK
@@ -112,15 +139,10 @@ jobs:
           name: kopilka-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 90
 
       - name: Build signed release APK
         if: steps.build_type.outputs.build_type == 'release' || steps.build_type.outputs.build_type == 'both'
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.jks
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew --no-daemon :app:assembleRelease
 
       - name: Upload release APK
@@ -130,4 +152,4 @@ jobs:
           name: kopilka-release-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 90
