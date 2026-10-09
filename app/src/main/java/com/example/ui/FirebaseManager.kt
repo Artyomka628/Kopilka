@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import com.example.model.Transaction
 import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -14,56 +13,21 @@ object FirebaseManager {
     private var isInitialized = false
 
     fun initialize(context: Context) {
-        // Double check if the default Firebase app is already initialized
-        var defaultAppInitialized = false
-        try {
-            FirebaseApp.getInstance()
-            defaultAppInitialized = true
-        } catch (e: IllegalStateException) {
-            // Default app not initialized
-        }
-
-        if (defaultAppInitialized) {
-            isInitialized = true
-            return
-        }
-
-        try {
-            if (FirebaseApp.getApps(context).isEmpty()) {
-                // Try initializing with google-services.json defaults (automatic)
+        isInitialized = try {
+            val app = try {
+                FirebaseApp.getInstance()
+            } catch (_: IllegalStateException) {
                 FirebaseApp.initializeApp(context)
-                defaultAppInitialized = true
-                Log.d(TAG, "Firebase initialized automatically.")
-            } else {
-                Log.d(TAG, "Firebase apps already exist, checking if default app is initialized.")
-                try {
-                    FirebaseApp.getInstance()
-                    defaultAppInitialized = true
-                } catch (e: IllegalStateException) {
-                    // There are some apps, but default is not one of them. We will initialize default manually below.
-                }
             }
+            app != null
         } catch (e: Exception) {
-            Log.w(TAG, "Automatic Firebase initialization failed. Trying manual fallback.", e)
+            Log.w(TAG, "Firebase initialization failed.", e)
+            false
         }
 
-        if (!defaultAppInitialized) {
-            try {
-                // Fallback initialization to prevent crashes when google-services.json is missing
-                val options = FirebaseOptions.Builder()
-                    .setApplicationId("1:1234567890:android:abcdef")
-                    .setProjectId("kopilka-uzwnpa")
-                    .setApiKey("placeholder_api_key_for_kopilka")
-                    .build()
-                FirebaseApp.initializeApp(context, options)
-                Log.d(TAG, "Firebase initialized with fallback options.")
-                defaultAppInitialized = true
-            } catch (fallbackEx: Exception) {
-                Log.e(TAG, "Fallback Firebase initialization failed as well.", fallbackEx)
-            }
+        if (!isInitialized) {
+            Log.w(TAG, "Firebase is not configured; authentication and cloud sync are disabled.")
         }
-
-        isInitialized = defaultAppInitialized
     }
 
     fun getAuth(): FirebaseAuth? {
