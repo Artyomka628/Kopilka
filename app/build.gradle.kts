@@ -9,6 +9,10 @@ plugins {
   alias(libs.plugins.google.services)
 }
 
+val releaseStorePassword = providers.environmentVariable("STORE_PASSWORD").orNull.orEmpty()
+val releaseKeyAlias = providers.environmentVariable("KEY_ALIAS").orNull.orEmpty()
+val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD").orNull.orEmpty()
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
@@ -22,10 +26,6 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
-
-  val releaseStorePassword = providers.environmentVariable("STORE_PASSWORD").orNull.orEmpty()
-  val releaseKeyAlias = providers.environmentVariable("KEY_ALIAS").orNull.orEmpty()
-  val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD").orNull.orEmpty()
 
   signingConfigs {
     create("release") {
