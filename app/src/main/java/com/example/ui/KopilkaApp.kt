@@ -5,6 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -185,6 +186,86 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
 }
 
 @Composable
+fun TestBuildWarningBanner(lang: AppLanguage) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = Color(0xFFFF9800),
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = LanguageHelper.getString("testBuildTitle", lang),
+                    color = ElegantTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Text(
+                    text = LanguageHelper.getString("testBuildSubtitle", lang),
+                    color = ElegantTextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(
+                        text = if (lang == AppLanguage.RU) "Понятно" else "OK",
+                        color = Color(0xFFFF9800),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = ElegantCardBg,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { showDialog = true },
+        color = Color(0xFFE65100).copy(alpha = 0.16f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Color(0xFFFF9800).copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = Color(0xFFFF9800),
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = LanguageHelper.getString("testBuildBanner", lang),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color(0xFFFFCC80),
+                    fontWeight = FontWeight.SemiBold
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
 fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val goal by viewModel.goal.collectAsStateWithLifecycle()
@@ -271,6 +352,10 @@ fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     ) {
         // App Header Row matching layout of top bar
         HeaderRow(viewModel = viewModel, lang = lang)
+
+        if (com.example.BuildConfig.DEBUG) {
+            TestBuildWarningBanner(lang = lang)
+        }
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -2286,11 +2371,12 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             shape = RoundedCornerShape(12.dp)
         )
 
-        // Category selection label
-        Row(
+        // Category selection dropdown
+        var isCategoryDropdownExpanded by remember { mutableStateOf(false) }
+
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
                 text = LanguageHelper.getString("category", lang),
@@ -2299,91 +2385,114 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     color = ElegantTextPrimary
                 )
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(ColorSpend.copy(alpha = 0.2f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Icon(
-                    imageVector = selectedCategory.icon,
-                    contentDescription = null,
-                    tint = ColorSpend,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = selectedCategory.getTitle(lang),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = ElegantTextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-        }
 
-        // Categories Grid
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            categories.chunked(4).forEach { rowCats ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { isCategoryDropdownExpanded = true },
+                    color = ElegantDarkBg,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        width = if (isCategoryDropdownExpanded) 2.dp else 1.dp,
+                        color = if (isCategoryDropdownExpanded) ColorSpend else ElegantHeaderBg
+                    )
                 ) {
-                    rowCats.forEach { category ->
-                        val isSelected = selectedCategory == category
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(70.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) ColorSpend.copy(alpha = 0.2f) else ElegantDarkBg)
-                                .border(
-                                    width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) ColorSpend else ElegantHeaderBg,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .clickable { selectedCategory = category }
-                                .padding(4.dp),
-                            contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(ColorSpend.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
                             ) {
+                                Icon(
+                                    imageVector = selectedCategory.icon,
+                                    contentDescription = selectedCategory.getTitle(lang),
+                                    tint = ColorSpend,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Text(
+                                text = selectedCategory.getTitle(lang),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = ElegantTextPrimary,
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Icon(
+                            imageVector = if (isCategoryDropdownExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Toggle category dropdown",
+                            tint = ElegantTextSecondary
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = isCategoryDropdownExpanded,
+                    onDismissRequest = { isCategoryDropdownExpanded = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 340.dp)
+                        .background(ElegantCardBg)
+                ) {
+                    categories.forEach { category ->
+                        val isSelected = category == selectedCategory
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = category.getTitle(lang),
+                                    color = if (isSelected) ColorSpend else ElegantTextPrimary,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            leadingIcon = {
                                 Icon(
                                     imageVector = category.icon,
                                     contentDescription = category.getTitle(lang),
-                                    tint = if (isSelected) ColorSpend else ElegantTextPrimary,
-                                    modifier = Modifier.size(22.dp)
+                                    tint = if (isSelected) ColorSpend else ElegantTextSecondary,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = category.getTitle(lang),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 10.sp,
-                                        lineHeight = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) ElegantTextPrimary else ElegantTextSecondary
-                                    ),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-                    for (i in 0 until (4 - rowCats.size)) {
-                        Spacer(modifier = Modifier.weight(1f))
+                            },
+                            trailingIcon = if (isSelected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = ColorSpend,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            } else null,
+                            onClick = {
+                                selectedCategory = category
+                                isCategoryDropdownExpanded = false
+                            },
+                            modifier = Modifier.background(
+                                if (isSelected) ColorSpend.copy(alpha = 0.12f) else Color.Transparent
+                            )
+                        )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             modifier = Modifier
@@ -2770,8 +2879,37 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                 fontWeight = FontWeight.Bold
             ),
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(bottom = 2.dp)
         )
+
+        if (com.example.BuildConfig.DEBUG) {
+            Surface(
+                modifier = Modifier.padding(bottom = 4.dp),
+                color = Color(0xFFE65100).copy(alpha = 0.2f),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Color(0xFFFF9800).copy(alpha = 0.6f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = LanguageHelper.getString("testBuildBanner", lang),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color(0xFFFFCC80),
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),

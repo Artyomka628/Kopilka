@@ -56,72 +56,46 @@ val CATEGORY_DICTIONARY: Map<String, ImageVector> = linkedMapOf(
 )
 
 /**
- * Словарь переводов на английский язык (необязательно).
- * Если категории нет в этом словаре, будет использовано её название из CATEGORY_DICTIONARY.
+ * Словарь переводов категорий на английский язык для всех элементов меню.
  */
 val CATEGORY_TRANSLATIONS_EN: Map<String, String> = mapOf(
-    "Прочее" to "Other",
-    "Продукты" to "Groceries",
-    "Кафе и рестораны" to "Cafe & Restaurants",
-    "Фастфуд" to "Fast food",
+    "Еда и напитки" to "Food & Drinks",
+    "Развлечения и культура" to "Entertainment & Culture",
+    "Книги, подписки и медиа" to "Books, Subscriptions & Media",
+    "Хобби и творчество" to "Hobbies & Crafts",
+    "Спорт и фитнес" to "Sports & Fitness",
+    "Путешествия и туризм" to "Travel & Tourism",
+    "Жильё и коммунальные услуги" to "Housing & Utilities",
+    "Дом, мебель и ремонт" to "Home, Furniture & Repair",
+    "Одежда и аксессуары" to "Clothing & Accessories",
+    "Красота и уход" to "Beauty & Personal Care",
+    "Медицина и страхование" to "Medicine & Insurance",
+    "Автомобиль" to "Car & Automotive",
     "Транспорт" to "Transport",
-    "Автомобиль" to "Car & Auto",
-    "Заправка" to "Fuel",
-    "Жильё" to "Housing & Rent",
-    "Коммуналка" to "Utilities",
-    "Связь и интернет" to "Internet & Mobile",
-    "Здоровье" to "Health",
-    "Аптека" to "Pharmacy",
-    "Одежда" to "Clothing & Shoes",
-    "Красота" to "Beauty & Care",
-    "Развлечения" to "Entertainment",
-    "Игры" to "Games",
-    "Подписки" to "Subscriptions",
-    "Техника" to "Tech & Electronics",
     "Образование" to "Education",
-    "Подарки" to "Gifts",
-    "Путешествия" to "Travel",
-    "Питомцы" to "Pets",
-    "Спорт" to "Sports",
-    "Услуги" to "Services",
-    "Кредиты и долги" to "Debts & Loans",
-    "Налоги" to "Taxes & Fees",
-    "Хобби" to "Hobby",
-    "Дети" to "Kids"
-)
-
-/**
- * Словарь для обратной совместимости со старыми идентификаторами сохраненных транзакций
- */
-private val LEGACY_CATEGORY_ID_MAP: Map<String, String> = mapOf(
-    "other" to "Прочее",
-    "groceries" to "Продукты",
-    "cafe" to "Кафе и рестораны",
-    "fastfood" to "Фастфуд",
-    "transport" to "Транспорт",
-    "auto" to "Автомобиль",
-    "fuel" to "Заправка",
-    "housing" to "Жильё",
-    "utilities" to "Коммуналка",
-    "internet" to "Связь и интернет",
-    "health" to "Здоровье",
-    "pharmacy" to "Аптека",
-    "clothing" to "Одежда",
-    "beauty" to "Красота",
-    "entertainment" to "Развлечения",
-    "games" to "Игры",
-    "subscriptions" to "Подписки",
-    "tech" to "Техника",
-    "education" to "Образование",
-    "gifts" to "Подарки",
-    "travel" to "Путешествия",
-    "pets" to "Питомцы",
-    "sports" to "Спорт",
-    "services" to "Услуги",
-    "debts" to "Кредиты и долги",
-    "taxes" to "Налоги",
-    "hobby" to "Хобби",
-    "kids" to "Дети"
+    "Дети" to "Kids & Family",
+    "Домашние животные" to "Pets",
+    "Подарки и праздники" to "Gifts & Celebrations",
+    "Благотворительность и религия" to "Charity & Donations",
+    "Налоги, штрафы и госуслуги" to "Taxes, Fines & Gov Services",
+    "Юридические и бухгалтерские услуги" to "Legal & Accounting",
+    "Банковские и финансовые расходы" to "Banking & Financial Expenses",
+    "Сбережения и инвестиции" to "Savings & Investments",
+    "Покупки" to "Shopping",
+    "Электроника и программное обеспечение" to "Electronics & Software",
+    "Связь, интернет и почта" to "Mobile, Internet & Mail",
+    "Рабочие расходы" to "Work Expenses",
+    "Безопасность" to "Security",
+    "Личные и бытовые услуги" to "Personal & Home Services",
+    "Переезд и хранение вещей" to "Moving & Storage",
+    "Документы и визы" to "Documents & Visas",
+    "Природа и отдых" to "Nature & Outdoors",
+    "Ночная жизнь и мероприятия" to "Nightlife & Events",
+    "Социальные и семейные расходы" to "Social & Family",
+    "Повседневные и непредвиденные расходы" to "Daily & Incidentals",
+    "Крупные и разовые покупки" to "Major & One-Off Purchases",
+    "Сезонные расходы" to "Seasonal Expenses",
+    "Прочее" to "Other"
 )
 
 data class ExpenseCategory(
@@ -170,13 +144,7 @@ data class ExpenseCategory(
                 return ExpenseCategory(name = match.key, icon = match.value)
             }
 
-            // 3. Совпадение со старыми идентификаторами версий (e.g. "groceries" -> "Продукты")
-            val legacyName = LEGACY_CATEGORY_ID_MAP[id.lowercase()]
-            if (legacyName != null && CATEGORY_DICTIONARY.containsKey(legacyName)) {
-                return ExpenseCategory(name = legacyName, icon = CATEGORY_DICTIONARY[legacyName]!!)
-            }
-
-            // 4. Совпадение по английскому названию
+            // 3. Совпадение по английскому названию
             val reverseEnMatch = CATEGORY_TRANSLATIONS_EN.entries.firstOrNull {
                 it.value.equals(id, ignoreCase = true)
             }
@@ -187,8 +155,8 @@ data class ExpenseCategory(
                 )
             }
 
-            // 5. Если категория была создана пользователем вручную и удалена позже
-            return ExpenseCategory(name = id, icon = OTHER.icon)
+            // 4. По умолчанию для неизвестных категорий
+            return OTHER
         }
     }
 }

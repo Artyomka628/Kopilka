@@ -69,35 +69,39 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private val prefs: SharedPreferences by lazy {
         val application = getApplication<Application>()
-        val masterKey = androidx.security.crypto.MasterKey.Builder(application)
-            .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        try {
+            val masterKey = androidx.security.crypto.MasterKey.Builder(application)
+                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+                .build()
+                
+            val encrypted = androidx.security.crypto.EncryptedSharedPreferences.create(
+                application,
+                "kopilka_prefs_encrypted",
+                masterKey,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
             
-        val encrypted = androidx.security.crypto.EncryptedSharedPreferences.create(
-            application,
-            "kopilka_prefs_encrypted",
-            masterKey,
-            androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-        
-        val oldPrefs = application.getSharedPreferences("kopilka_prefs", Context.MODE_PRIVATE)
-        if (oldPrefs.all.isNotEmpty()) {
-            val editor = encrypted.edit()
-            for ((key, value) in oldPrefs.all) {
-                when (value) {
-                    is Boolean -> editor.putBoolean(key, value)
-                    is Float -> editor.putFloat(key, value)
-                    is Int -> editor.putInt(key, value)
-                    is Long -> editor.putLong(key, value)
-                    is String -> editor.putString(key, value)
-                    is Set<*> -> editor.putStringSet(key, value as Set<String>)
+            val oldPrefs = application.getSharedPreferences("kopilka_prefs", Context.MODE_PRIVATE)
+            if (oldPrefs.all.isNotEmpty()) {
+                val editor = encrypted.edit()
+                for ((key, value) in oldPrefs.all) {
+                    when (value) {
+                        is Boolean -> editor.putBoolean(key, value)
+                        is Float -> editor.putFloat(key, value)
+                        is Int -> editor.putInt(key, value)
+                        is Long -> editor.putLong(key, value)
+                        is String -> editor.putString(key, value)
+                        is Set<*> -> editor.putStringSet(key, value as Set<String>)
+                    }
                 }
+                editor.apply()
+                oldPrefs.edit().clear().apply()
             }
-            editor.apply()
-            oldPrefs.edit().clear().apply()
+            encrypted
+        } catch (e: Exception) {
+            application.getSharedPreferences("kopilka_prefs", Context.MODE_PRIVATE)
         }
-        encrypted
     }
 
     private val moshi = Moshi.Builder()
