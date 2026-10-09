@@ -23,13 +23,17 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  val releaseStorePassword = providers.environmentVariable("STORE_PASSWORD").orNull.orEmpty()
+  val releaseKeyAlias = providers.environmentVariable("KEY_ALIAS").orNull.orEmpty()
+  val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD").orNull.orEmpty()
+
   signingConfigs {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/release.jks"
       storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD") ?: "3072046"
-      keyAlias = System.getenv("KEY_ALIAS") ?: "key0"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: "3072046"
+      storePassword = releaseStorePassword
+      keyAlias = releaseKeyAlias
+      keyPassword = releaseKeyPassword
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -63,6 +67,16 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+}
+
+tasks.configureEach {
+  if (name == "validateSigningRelease") {
+    doFirst {
+      check(releaseStorePassword.isNotBlank()) { "STORE_PASSWORD must be set for release signing." }
+      check(releaseKeyAlias.isNotBlank()) { "KEY_ALIAS must be set for release signing." }
+      check(releaseKeyPassword.isNotBlank()) { "KEY_PASSWORD must be set for release signing." }
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
