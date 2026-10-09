@@ -180,6 +180,9 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
 
+    private val _showTestBuildDialog = MutableStateFlow(false)
+    val showTestBuildDialog: StateFlow<Boolean> = _showTestBuildDialog.asStateFlow()
+
     init {
         FirebaseManager.initialize(application)
         loadFromPrefs()
@@ -189,6 +192,21 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             syncData()
         }
         updateLauncherIconSettings()
+        checkTestBuildWarning()
+    }
+
+    private fun checkTestBuildWarning() {
+        if (!com.example.BuildConfig.DEBUG) return
+        val rememberedCommit = prefs.getString("last_seen_test_build_commit", null)
+        val currentCommit = com.example.BuildInfo.COMMIT_HASH
+        if (rememberedCommit.isNullOrEmpty() || rememberedCommit != currentCommit) {
+            _showTestBuildDialog.value = true
+        }
+    }
+
+    fun dismissTestBuildDialog() {
+        _showTestBuildDialog.value = false
+        prefs.edit().putString("last_seen_test_build_commit", com.example.BuildInfo.COMMIT_HASH).apply()
     }
 
     private fun loadFromPrefs() {

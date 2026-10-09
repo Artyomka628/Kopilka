@@ -104,7 +104,9 @@ object LanguageHelper {
         "accountClearWarningDesc" to "You are signed into your account. Your history is synced with the cloud. Choose how to clear:",
         "testBuildBanner" to "Test build (Debug) — not a release version",
         "testBuildTitle" to "Test Build Warning",
-        "testBuildSubtitle" to "This application was built in debug/test mode and is not a release version."
+        "testBuildSubtitle" to "This application was built in debug/test mode and is not a release version.",
+        "commitHash" to "Commit",
+        "buildTime" to "Build Time"
     )
 
     private val ruStrings = mapOf(
@@ -205,7 +207,9 @@ object LanguageHelper {
         "accountClearWarningDesc" to "Вы вошли в аккаунт. Ваша история синхронизирована с облаком. Выберите вариант очистки:",
         "testBuildBanner" to "Тестовая сборка (Debug) — не релизная версия",
         "testBuildTitle" to "Предупреждение о тестовой сборке",
-        "testBuildSubtitle" to "Данное приложение собрано в режиме тестирования (Debug) и не является релизной версией."
+        "testBuildSubtitle" to "Данное приложение собрано в режиме тестирования (Debug) и не является релизной версией.",
+        "commitHash" to "Коммит",
+        "buildTime" to "Дата сборки"
     )
 
     fun getString(key: String, language: AppLanguage): String {

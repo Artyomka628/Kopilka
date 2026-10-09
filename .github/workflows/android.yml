@@ -50,6 +50,19 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
+      - name: Write build info
+        run: |
+          COMMIT_HASH="${{ github.sha }}"
+          BUILD_TIME="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          mkdir -p app/src/main/java/com/example
+          printf '%s\n' \
+            'package com.example' \
+            '' \
+            'object BuildInfo {' \
+            "    const val COMMIT_HASH: String = \"${COMMIT_HASH}\"" \
+            "    const val BUILD_TIME: String = \"${BUILD_TIME}\"" \
+            '}' > app/src/main/java/com/example/BuildInfo.kt
+
       - name: Build debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 

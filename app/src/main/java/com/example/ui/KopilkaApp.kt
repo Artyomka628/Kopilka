@@ -181,86 +181,48 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun TestBuildWarningBanner(lang: AppLanguage) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = Color(0xFFFF9800),
-                    modifier = Modifier.size(28.dp)
+            // Test build first launch / commit update warning dialog (Debug only)
+            val showTestBuildDialog by viewModel.showTestBuildDialog.collectAsStateWithLifecycle()
+            if (showTestBuildDialog) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.dismissTestBuildDialog() },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFF9800),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = LanguageHelper.getString("testBuildTitle", lang),
+                            color = ElegantTextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = LanguageHelper.getString("testBuildSubtitle", lang),
+                            color = ElegantTextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.dismissTestBuildDialog() }) {
+                            Text(
+                                text = if (lang == AppLanguage.RU) "Понятно" else "OK",
+                                color = Color(0xFFFF9800),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    containerColor = ElegantCardBg,
+                    shape = RoundedCornerShape(20.dp)
                 )
-            },
-            title = {
-                Text(
-                    text = LanguageHelper.getString("testBuildTitle", lang),
-                    color = ElegantTextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            },
-            text = {
-                Text(
-                    text = LanguageHelper.getString("testBuildSubtitle", lang),
-                    color = ElegantTextSecondary,
-                    textAlign = TextAlign.Center
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text(
-                        text = if (lang == AppLanguage.RU) "Понятно" else "OK",
-                        color = Color(0xFFFF9800),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-            containerColor = ElegantCardBg,
-            shape = RoundedCornerShape(20.dp)
-        )
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { showDialog = true },
-        color = Color(0xFFE65100).copy(alpha = 0.16f),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, Color(0xFFFF9800).copy(alpha = 0.5f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                tint = Color(0xFFFF9800),
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = LanguageHelper.getString("testBuildBanner", lang),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFFFFCC80),
-                    fontWeight = FontWeight.SemiBold
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            }
         }
     }
 }
@@ -352,10 +314,6 @@ fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     ) {
         // App Header Row matching layout of top bar
         HeaderRow(viewModel = viewModel, lang = lang)
-
-        if (com.example.BuildConfig.DEBUG) {
-            TestBuildWarningBanner(lang = lang)
-        }
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -2881,6 +2839,32 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = 2.dp)
         )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.padding(bottom = 4.dp)
+        ) {
+            val commitDisplay = if (com.example.BuildInfo.COMMIT_HASH.length > 8) {
+                com.example.BuildInfo.COMMIT_HASH.take(8)
+            } else {
+                com.example.BuildInfo.COMMIT_HASH
+            }
+            Text(
+                text = "${LanguageHelper.getString("commitHash", lang)}: $commitDisplay",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = ElegantTextSecondary.copy(alpha = 0.8f)
+                ),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "${LanguageHelper.getString("buildTime", lang)}: ${com.example.BuildInfo.BUILD_TIME}",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = ElegantTextSecondary.copy(alpha = 0.8f)
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
 
         if (com.example.BuildConfig.DEBUG) {
             Surface(
