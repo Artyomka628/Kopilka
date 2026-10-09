@@ -715,7 +715,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             _authError.value = if (_selectedLanguage.value == AppLanguage.RU) "Firebase не инициализирован" else "Firebase not initialized"
             return
         }
-        auth.signInWithEmailAndPassword(email.trim(), password.trim())
+        auth.signInWithEmailAndPassword(email.trim(), password)
             .addOnSuccessListener { result ->
                 _currentUserEmail.value = result.user?.email
                 _authLoading.value = false
@@ -740,7 +740,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             _authError.value = if (_selectedLanguage.value == AppLanguage.RU) "Firebase не инициализирован" else "Firebase not initialized"
             return
         }
-        auth.createUserWithEmailAndPassword(email.trim(), password.trim())
+        auth.createUserWithEmailAndPassword(email.trim(), password)
             .addOnSuccessListener { result ->
                 _currentUserEmail.value = result.user?.email
                 _authLoading.value = false

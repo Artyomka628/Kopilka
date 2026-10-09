@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      function ownsUserDocument() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read: if ownsUserDocument();
+
+      allow create, update: if ownsUserDocument()
+        && request.resource.data.keys().hasOnly([
+          'encrypted_payload',
+          'balance',
+          'goal',
+          'deletedTxIds',
+          'transactions'
+        ])
+        && (
+          (
+            request.resource.data.keys().hasOnly(['encrypted_payload'])
+            && request.resource.data.encrypted_payload is string
+            && request.resource.data.encrypted_payload.size() <= 900000
+          )
+          ||
+          (
+            request.resource.data.keys().hasAll([
+              'balance',
+              'goal',
+              'deletedTxIds',
+              'transactions'
+            ])
+            && request.resource.data.balance is number
+            && request.resource.data.goal is number
+            && request.resource.data.deletedTxIds is list
+            && request.resource.data.transactions is list
+          )
+        );
+    }
+  }
+}
