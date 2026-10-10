@@ -1080,7 +1080,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                     val latestVersion = connection.inputStream.bufferedReader().use { it.readText() }.trim()
                     val currentVersion = com.example.BuildConfig.VERSION_NAME
                     
-                    if (latestVersion.isNotEmpty() && latestVersion != currentVersion) {
+                    if (latestVersion.isNotEmpty() && isNewerVersion(latestVersion, currentVersion)) {
                         withContext(Dispatchers.Main) {
                             _updateState.value = UpdateState.UpdateAvailable(
                                 latestVersion = latestVersion,
@@ -1106,6 +1106,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+}
+
+private fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean {
+    val latestParts = latestVersion.trim().split('.').map { it.toIntOrNull() ?: return false }
+    val currentParts = currentVersion.trim().split('.').map { it.toIntOrNull() ?: return false }
+    val partCount = maxOf(latestParts.size, currentParts.size)
+
+    for (index in 0 until partCount) {
+        val latestPart = latestParts.getOrElse(index) { 0 }
+        val currentPart = currentParts.getOrElse(index) { 0 }
+        if (latestPart > currentPart) return true
+        if (latestPart < currentPart) return false
+    }
+    return false
 }
 
 sealed class UpdateState {

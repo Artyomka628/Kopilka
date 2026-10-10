@@ -28,6 +28,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -300,15 +301,17 @@ fun SettingsSheetContent(
         val signOutText = if (lang == AppLanguage.RU) "Выйти" else "Sign Out"
         val syncNowText = if (lang == AppLanguage.RU) "Синхронизировать" else "Sync Now"
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = accountTitle,
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (com.example.BuildConfig.DEBUG) Modifier.blur(6.dp) else Modifier)
+                    .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = accountTitle,
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = ElegantTextPrimary,
                     fontWeight = FontWeight.Bold
@@ -511,6 +514,41 @@ fun SettingsSheetContent(
                         .padding(vertical = 4.dp)
                         .align(Alignment.CenterHorizontally)
                 )
+            }
+        }
+
+            if (com.example.BuildConfig.DEBUG) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(ElegantCardBg.copy(alpha = 0.78f))
+                        .clickable { },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudOff,
+                            contentDescription = null,
+                            tint = ElegantLavender,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Text(
+                            text = LanguageHelper.getString("syncDisabledInTestBuild", lang),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = ElegantTextPrimary,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
 

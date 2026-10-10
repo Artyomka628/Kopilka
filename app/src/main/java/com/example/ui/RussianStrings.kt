@@ -98,6 +98,7 @@ internal object RussianStrings {
         "accountClearWarningTitle" to "Внимание: вход в аккаунт",
         "accountClearWarningDesc" to "Вы вошли в аккаунт. Ваша история синхронизирована с облаком. Выберите вариант очистки:",
         "testBuildBanner" to "Тестовая сборка (Debug) — не релизная версия",
+        "syncDisabledInTestBuild" to "В тестовых сборках облачная синхронизация отключена. Данные хранятся только на этом устройстве.",
         "onboardingWelcomeTitle" to "Добро пожаловать в Копилку",
         "onboardingWelcomeText" to "Копилка помогает следить за балансом, доходами, расходами и долгами. Используйте кнопки на главном экране или свайп вправо для долгов и влево для настроек.",
         "onboardingIncomeTitle" to "Как добавить доход",

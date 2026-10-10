@@ -572,6 +572,8 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -861,8 +863,8 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             onClick = { viewModel.showSheet(SheetType.SETTINGS) },
             modifier = Modifier
                 .fillMaxWidth(0.5f)
-                .height(48.dp)
-                .padding(bottom = 16.dp),
+                .padding(bottom = 16.dp)
+                .height(48.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
             shape = RoundedCornerShape(16.dp)
         ) {

@@ -46,7 +46,7 @@ fun SettingsScreen(
                     IconButton(
                         onClick = { viewModel.navigateTo(AppScreen.MAIN) },
                         modifier = Modifier
-                            .padding(start = 8.dp)
+                            .padding(start = 16.dp)
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF35343A))

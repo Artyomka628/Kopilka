@@ -98,6 +98,7 @@ internal object EnglishStrings {
         "accountClearWarningTitle" to "Warning: Account Logged In",
         "accountClearWarningDesc" to "You are signed into your account. Your history is synced with the cloud. Choose how to clear:",
         "testBuildBanner" to "Test build (Debug) — not a release version",
+        "syncDisabledInTestBuild" to "Cloud synchronization is disabled in test builds. Your data is stored on this device only.",
         "onboardingWelcomeTitle" to "Welcome to Kopilka",
         "onboardingWelcomeText" to "Kopilka helps you track your balance, income, expenses and debts. Use the action buttons or swipe right for debts and left for settings.",
         "onboardingIncomeTitle" to "Add income",
