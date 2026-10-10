@@ -188,7 +188,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         loadFromPrefs()
         _currentUserEmail.value = FirebaseManager.getCurrentUserEmail()
         checkAndPerformAutomaticReset()
-        if (FirebaseManager.isUserSignedIn()) {
+        if (FirebaseManager.isUserSignedIn() && !com.example.BuildConfig.DEBUG) {
             syncData()
         }
         updateLauncherIconSettings()
@@ -807,7 +807,15 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private var syncTimeoutJob: kotlinx.coroutines.Job? = null
 
-    fun syncData() {
+    fun syncData(showExplicitToast: Boolean = false) {
+        if (com.example.BuildConfig.DEBUG) {
+            _isSyncing.value = false
+            if (showExplicitToast) {
+                showToast(LanguageHelper.getString("syncDisabledInTestBuild", _selectedLanguage.value ?: AppLanguage.RU))
+            }
+            return
+        }
+
         val auth = FirebaseManager.getAuth()
         val db = FirebaseManager.getFirestore()
         val userId = auth?.currentUser?.uid

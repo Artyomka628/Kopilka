@@ -104,9 +104,11 @@ object LanguageHelper {
         "accountClearWarningDesc" to "You are signed into your account. Your history is synced with the cloud. Choose how to clear:",
         "testBuildBanner" to "Test build (Debug) — not a release version",
         "testBuildTitle" to "Test Build Warning",
-        "testBuildSubtitle" to "This application was built in debug/test mode and is not a release version.",
+        "testBuildSubtitle" to "You are using a test (Debug) build of the application.\n\n• Cloud Sync Disabled: To protect your transaction history from accidental corruption or data loss, cloud synchronization is blocked in this build.\n• Local Storage Only: All transactions are stored only locally on your device. It is recommended to periodically export your history via Settings.\n• Potential Instability: This build is intended for testing and development, so unexpected bugs or changes in data format may occur.\n\nFor safe usage and cloud synchronization, please use official release builds.",
         "commitHash" to "Commit",
-        "buildTime" to "Build Time"
+        "buildTime" to "Build Time",
+        "syncDisabledInTestBuild" to "Cloud sync is disabled in test builds to protect transaction history.",
+        "testBuildDetailsTitle" to "Test Build Details"
     )
 
     private val ruStrings = mapOf(
@@ -207,9 +209,11 @@ object LanguageHelper {
         "accountClearWarningDesc" to "Вы вошли в аккаунт. Ваша история синхронизирована с облаком. Выберите вариант очистки:",
         "testBuildBanner" to "Тестовая сборка (Debug) — не релизная версия",
         "testBuildTitle" to "Предупреждение о тестовой сборке",
-        "testBuildSubtitle" to "Данное приложение собрано в режиме тестирования (Debug) и не является релизной версией.",
+        "testBuildSubtitle" to "Вы используете тестовую (Debug) сборку приложения.\n\n• Синхронизация отключена: ради сохранности вашей истории операций синхронизация с облаком в этой сборке заблокирована, чтобы предотвратить повреждение или перезапись данных.\n• Локальное хранение: все изменения сохраняются только на вашем устройстве. Рекомендуется периодически делать экспорт истории через Настройки.\n• Возможная нестабильность: эта сборка предназначена для тестирования и разработки, возможны непредвиденные ошибки или изменения формата данных.\n\nДля безопасной работы и синхронизации с облаком используйте официальные релизные версии.",
         "commitHash" to "Коммит",
-        "buildTime" to "Дата сборки"
+        "buildTime" to "Дата сборки",
+        "syncDisabledInTestBuild" to "Синхронизация отключена в тестовой сборке ради сохранности истории.",
+        "testBuildDetailsTitle" to "Подробнее о тестовой сборке"
     )
 
     fun getString(key: String, language: AppLanguage): String {

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
@@ -192,7 +193,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                             imageVector = Icons.Default.Warning,
                             contentDescription = null,
                             tint = Color(0xFFFF9800),
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                     },
                     title = {
@@ -204,17 +205,30 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                         )
                     },
                     text = {
-                        Text(
-                            text = LanguageHelper.getString("testBuildSubtitle", lang),
-                            color = ElegantTextSecondary,
-                            textAlign = TextAlign.Center
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = LanguageHelper.getString("testBuildSubtitle", lang),
+                                color = ElegantTextSecondary,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    lineHeight = 21.sp
+                                ),
+                                textAlign = TextAlign.Start
+                            )
+                        }
                     },
                     confirmButton = {
-                        TextButton(onClick = { viewModel.dismissTestBuildDialog() }) {
+                        Button(
+                            onClick = { viewModel.dismissTestBuildDialog() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
+                        ) {
                             Text(
-                                text = if (lang == AppLanguage.RU) "Понятно" else "OK",
-                                color = Color(0xFFFF9800),
+                                text = if (lang == AppLanguage.RU) "Понятно" else "I Understand",
+                                color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -568,7 +582,7 @@ fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                         strokeWidth = 2.dp
                     )
                 }
-            } else if (currentUserEmail != null && unsyncedTxIds.isNotEmpty()) {
+            } else if (!com.example.BuildConfig.DEBUG && currentUserEmail != null && unsyncedTxIds.isNotEmpty()) {
                 // Sync issue warning button
                 IconButton(
                     onClick = { showSyncDialog = true },
@@ -581,6 +595,24 @@ fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                         imageVector = Icons.Default.SyncProblem,
                         contentDescription = "Sync warning",
                         tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else if (com.example.BuildConfig.DEBUG && currentUserEmail != null) {
+                // Cloud sync disabled in test build indicator
+                IconButton(
+                    onClick = {
+                        viewModel.showToast(LanguageHelper.getString("syncDisabledInTestBuild", lang))
+                    },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(ElegantCardBg)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudOff,
+                        contentDescription = "Cloud sync disabled in test build",
+                        tint = Color(0xFFFF9800),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -1300,13 +1332,42 @@ fun SettingsSheetContent(
                     )
                 }
 
+                if (com.example.BuildConfig.DEBUG) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFFE65100).copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFF9800).copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudOff,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = LanguageHelper.getString("syncDisabledInTestBuild", lang),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFFFFCC80),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = { viewModel.syncData() },
-                        enabled = !isSyncing,
+                        onClick = { viewModel.syncData(showExplicitToast = true) },
+                        enabled = !com.example.BuildConfig.DEBUG && !isSyncing,
                         modifier = Modifier.weight(1f).height(40.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
                         shape = RoundedCornerShape(10.dp)
@@ -2867,28 +2928,98 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
         }
 
         if (com.example.BuildConfig.DEBUG) {
+            var showDetailDialog by remember { mutableStateOf(false) }
+
+            if (showDetailDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDetailDialog = false },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFF9800),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = LanguageHelper.getString("testBuildTitle", lang),
+                            color = ElegantTextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = LanguageHelper.getString("testBuildSubtitle", lang),
+                                color = ElegantTextSecondary,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    lineHeight = 21.sp
+                                ),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showDetailDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
+                        ) {
+                            Text(
+                                text = if (lang == AppLanguage.RU) "Понятно" else "I Understand",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    containerColor = ElegantCardBg,
+                    shape = RoundedCornerShape(20.dp)
+                )
+            }
+
             Surface(
-                modifier = Modifier.padding(bottom = 4.dp),
-                color = Color(0xFFE65100).copy(alpha = 0.2f),
-                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showDetailDialog = true },
+                color = Color(0xFFE65100).copy(alpha = 0.15f),
+                shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color(0xFFFF9800).copy(alpha = 0.6f))
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = Color(0xFFFF9800),
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFF9800),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = LanguageHelper.getString("testBuildBanner", lang),
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                color = Color(0xFFFFCC80),
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                     Text(
-                        text = LanguageHelper.getString("testBuildBanner", lang),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = Color(0xFFFFCC80),
-                            fontWeight = FontWeight.Bold
+                        text = LanguageHelper.getString("syncDisabledInTestBuild", lang),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = ElegantTextSecondary,
+                            lineHeight = 16.sp
                         )
                     )
                 }

@@ -35,6 +35,13 @@ android {
       keyAlias = releaseKeyAlias
       keyPassword = releaseKeyPassword
     }
+    create("debugConfig") {
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/debug.keystore"
+      storeFile = file(keystorePath)
+      storePassword = System.getenv("STORE_PASSWORD") ?: "android"
+      keyAlias = System.getenv("KEY_ALIAS") ?: "androiddebugkey"
+      keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+    }
   }
 
   buildTypes {
@@ -48,7 +55,7 @@ android {
     debug {
       isMinifyEnabled = false
       isShrinkResources = false
-      signingConfig = signingConfigs.getByName("release")
+      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
   compileOptions {
