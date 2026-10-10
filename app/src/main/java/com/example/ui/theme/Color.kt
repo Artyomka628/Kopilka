@@ -3,8 +3,8 @@ package com.example.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Elegant Dark Palette colors matching design spec
-val ElegantDarkBg = Color(0xFF1C1B1F)       // Main charcoal background
-val ElegantCardBg = Color(0xFF2B2930)       // Dark purple-grey card background
+val ElegantDarkBg = Color(0xFF2A292F)       // Main grey-charcoal background
+val ElegantCardBg = Color(0xFF1C1B1F)       // Dark card background
 val ElegantHeaderBg = Color(0xFF49454F)     // Medium grey header/balance card
 val ElegantLavender = Color(0xFFD0BCFF)     // Beautiful primary accent lavender
 val ElegantTextPrimary = Color(0xFFE6E1E5)  // Light off-white

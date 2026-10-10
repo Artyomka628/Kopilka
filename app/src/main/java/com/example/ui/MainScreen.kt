@@ -1,6 +1,5 @@
 package com.example.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -454,7 +453,6 @@ fun BalanceSummaryCard(
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, ElegantLavender.copy(alpha = 0.45f)),
         colors = CardDefaults.cardColors(containerColor = ElegantHeaderBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -784,7 +782,6 @@ fun TransactionItemRow(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, ElegantTextSecondary.copy(alpha = 0.16f)),
         colors = CardDefaults.cardColors(containerColor = ElegantCardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -868,26 +865,25 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Spend Button (Coral Red with Down Arrow Icon)
-            OutlinedButton(
+            Button(
                 onClick = { viewModel.showSheet(SheetType.SPEND) },
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-                border = BorderStroke(1.dp, ColorSpend),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = ColorSpend.copy(alpha = 0.12f)),
+                colors = ButtonDefaults.buttonColors(containerColor = ColorSpend),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.TrendingDown,
                     contentDescription = null,
-                    tint = ColorSpend,
+                    tint = Color.Black,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = LanguageHelper.getString("btnSpend", lang),
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = ColorSpend,
+                        color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -895,26 +891,25 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
             }
 
             // Top Up Button (Mint Green with Up Arrow Icon)
-            OutlinedButton(
+            Button(
                 onClick = { viewModel.showSheet(SheetType.TOP_UP) },
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp),
-                border = BorderStroke(1.dp, ColorTopUp),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = ColorTopUp.copy(alpha = 0.12f)),
+                colors = ButtonDefaults.buttonColors(containerColor = ColorTopUp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                     contentDescription = null,
-                    tint = ColorTopUp,
+                    tint = Color.Black,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = LanguageHelper.getString("btnTopUp", lang),
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = ColorTopUp,
+                        color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -923,26 +918,25 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
         }
 
         // Big Debt Tracker Button
-        OutlinedButton(
+        Button(
             onClick = { viewModel.navigateTo(AppScreen.DEBTS) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            border = BorderStroke(1.dp, ElegantLavender),
-            colors = ButtonDefaults.outlinedButtonColors(containerColor = ElegantLavender.copy(alpha = 0.12f)),
+            colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.AccountBalanceWallet,
                 contentDescription = null,
-                tint = ElegantLavender,
+                tint = Color(0xFF1C1B1F),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = LanguageHelper.getString("btnDebts", lang),
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = ElegantLavender,
+                    color = Color(0xFF1C1B1F),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

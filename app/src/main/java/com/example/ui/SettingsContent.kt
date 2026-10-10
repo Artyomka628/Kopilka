@@ -303,7 +303,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -522,7 +522,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -598,7 +598,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -981,7 +981,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1081,7 +1081,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -1142,7 +1142,7 @@ fun SettingsSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ElegantDarkBg, shape = RoundedCornerShape(16.dp))
+                .background(ElegantCardBg, shape = RoundedCornerShape(16.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

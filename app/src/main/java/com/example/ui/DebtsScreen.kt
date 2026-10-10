@@ -73,8 +73,9 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = LanguageHelper.getString("debtsTitle", lang),
@@ -88,9 +89,10 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     IconButton(
                         onClick = { viewModel.navigateTo(AppScreen.MAIN) },
                         modifier = Modifier
+                            .padding(start = 8.dp)
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(ElegantCardBg)
+                            .background(Color(0xFF35343A))
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -100,10 +102,11 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = ElegantDarkBg,
                     titleContentColor = ElegantTextPrimary
-                )
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         containerColor = ElegantDarkBg
