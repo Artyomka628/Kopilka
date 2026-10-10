@@ -3,6 +3,7 @@ package com.example.ui
 import android.os.Build
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -12,6 +13,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,11 +24,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CompareArrows
@@ -140,6 +150,37 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
         }
     }
 
+    val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
+
+    // Synchronize pager page changes to viewModel.currentScreen when user swipes
+    LaunchedEffect(pagerState.currentPage) {
+        val targetScreen = when (pagerState.currentPage) {
+            0 -> AppScreen.SETTINGS
+            1 -> AppScreen.MAIN
+            2 -> AppScreen.DEBTS
+            else -> AppScreen.MAIN
+        }
+        if (viewModel.currentScreen.value != targetScreen) {
+            viewModel.navigateTo(targetScreen)
+        }
+    }
+
+    // Synchronize viewModel.currentScreen changes (e.g. from buttons or back press) to animated pager scroll
+    LaunchedEffect(currentScreen) {
+        val targetPage = when (currentScreen) {
+            AppScreen.SETTINGS -> 0
+            AppScreen.MAIN -> 1
+            AppScreen.DEBTS -> 2
+        }
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(
+                page = targetPage,
+                animationSpec = tween(durationMillis = 350)
+            )
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = ElegantDarkBg
@@ -149,11 +190,37 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Main Screen content
-            MainScreen(
-                viewModel = viewModel,
-                lang = lang
-            )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            onSaveClick = {
+                                exportLauncher.launch("kopilka_history.json")
+                            },
+                            onLoadClick = {
+                                importLauncher.launch(arrayOf("application/json"))
+                            },
+                            lang = lang
+                        )
+                    }
+                    1 -> {
+                        MainScreen(
+                            viewModel = viewModel,
+                            lang = lang
+                        )
+                    }
+                    2 -> {
+                        DebtsScreen(
+                            viewModel = viewModel,
+                            lang = lang
+                        )
+                    }
+                }
+            }
 
             // Bottom Sheet Modal (Standard Material 3 styled elegantly)
             if (currentSheet != null) {
@@ -178,7 +245,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                         SheetType.SET_GOAL -> SetGoalSheetContent(viewModel, lang)
                         SheetType.COUNT_MONEY -> CountMoneySheetContent(viewModel, lang)
                         SheetType.ABOUT_APP -> AboutAppSheetContent(viewModel, lang)
-                        null -> {}
+                        else -> {}
                     }
                 }
             }
@@ -549,7 +616,7 @@ fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
         // Action buttons (Sync indicator & Settings)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (syncSuccessTrigger) {
                 // Successful sync display (non-clickable green cloud with checkmark)
@@ -620,7 +687,7 @@ fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
 
             // Settings button
             IconButton(
-                onClick = { viewModel.showSheet(SheetType.SETTINGS) },
+                onClick = { viewModel.navigateTo(AppScreen.SETTINGS) },
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
@@ -679,14 +746,96 @@ fun BalanceSummaryCard(
                 formattedBalance
             }
 
-            Text(
-                text = balanceTextToShow,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ElegantTextPrimary
+            val debts by viewModel.debts.collectAsStateWithLifecycle()
+            val totalIOwe = remember(debts) {
+                debts.filter { it.type == com.example.model.DebtType.I_OWE }.sumOf { it.amount }
+            }
+            val totalOwedToMe = remember(debts) {
+                debts.filter { it.type == com.example.model.DebtType.OWED_TO_ME }.sumOf { it.amount }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = balanceTextToShow,
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ElegantTextPrimary
+                    )
                 )
-            )
+
+                if (totalIOwe > 0.0 || totalOwedToMe > 0.0) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { viewModel.navigateTo(AppScreen.DEBTS) }
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        if (totalOwedToMe > 0.0) {
+                            val owedFormatted = if (customEnabled && customSymbol.isNotEmpty()) {
+                                "${formatDouble(totalOwedToMe)} $customSymbol"
+                            } else {
+                                formatDouble(totalOwedToMe)
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = if (lang == AppLanguage.RU) "Вам:" else "To you:",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = ColorTopUp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                                Text(
+                                    text = owedFormatted,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = ColorTopUp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+                        if (totalIOwe > 0.0) {
+                            val oweFormatted = if (customEnabled && customSymbol.isNotEmpty()) {
+                                "${formatDouble(totalIOwe)} $customSymbol"
+                            } else {
+                                formatDouble(totalIOwe)
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = if (lang == AppLanguage.RU) "Вы:" else "You owe:",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = ColorSpend,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                                Text(
+                                    text = oweFormatted,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = ColorSpend,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -1034,6 +1183,32 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                 )
             }
         }
+
+        // Big Debt Tracker Button
+        Button(
+            onClick = { viewModel.navigateTo(AppScreen.DEBTS) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.AccountBalanceWallet,
+                contentDescription = null,
+                tint = ElegantBtnText,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = LanguageHelper.getString("btnDebts", lang),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = ElegantBtnText,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            )
+        }
     }
 }
 
@@ -1133,7 +1308,8 @@ fun SettingsSheetContent(
     viewModel: KopilkaViewModel,
     onSaveClick: () -> Unit,
     onLoadClick: () -> Unit,
-    lang: AppLanguage
+    lang: AppLanguage,
+    isFullScreen: Boolean = false
 ) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
     val ElegantBtnText = Color(0xFF1C1B1F)
@@ -1142,18 +1318,20 @@ fun SettingsSheetContent(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = if (isFullScreen) 8.dp else 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = LanguageHelper.getString("settingsTitle", lang),
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                color = ElegantTextPrimary
-            ),
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        if (!isFullScreen) {
+            Text(
+                text = LanguageHelper.getString("settingsTitle", lang),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = ElegantTextPrimary
+                ),
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+        }
 
         val buttonShape = RoundedCornerShape(16.dp)
         val buttonColors = ButtonDefaults.buttonColors(containerColor = ElegantLavender)

@@ -107,8 +107,25 @@ object LanguageHelper {
         "testBuildSubtitle" to "You are using a test (Debug) build of the application.\n\n• Cloud Sync Disabled: To protect your transaction history from accidental corruption or data loss, cloud synchronization is blocked in this build.\n• Local Storage Only: All transactions are stored only locally on your device. It is recommended to periodically export your history via Settings.\n• Potential Instability: This build is intended for testing and development, so unexpected bugs or changes in data format may occur.\n\nFor safe usage and cloud synchronization, please use official release builds.",
         "commitHash" to "Commit",
         "buildTime" to "Build Time",
-        "syncDisabledInTestBuild" to "Cloud sync is disabled in test builds to protect transaction history.",
-        "testBuildDetailsTitle" to "Test Build Details"
+        "testBuildDetailsTitle" to "Test Build Details",
+        "btnDebts" to "Debts",
+        "debtsTitle" to "Debt Tracker",
+        "iOwe" to "I owe",
+        "owedToMe" to "Owed to me",
+        "giveDebt" to "Lend (They owe)",
+        "takeDebt" to "Borrow (I owe)",
+        "personName" to "Name",
+        "debtAmount" to "Amount",
+        "emptyDebts" to "No debts recorded yet",
+        "fullyReturned" to "Fully returned",
+        "editDebt" to "Edit Debt",
+        "debtAmountRemaining" to "Remaining debt",
+        "invalidName" to "Please enter a name",
+        "totalIOwe" to "I owe",
+        "totalOwedToMe" to "Owed to me",
+        "filterAll" to "All",
+        "filterIOwe" to "I owe",
+        "filterOwedToMe" to "Owed to me"
     )
 
     private val ruStrings = mapOf(
@@ -212,8 +229,25 @@ object LanguageHelper {
         "testBuildSubtitle" to "Вы используете тестовую (Debug) сборку приложения.\n\n• Синхронизация отключена: ради сохранности вашей истории операций синхронизация с облаком в этой сборке заблокирована, чтобы предотвратить повреждение или перезапись данных.\n• Локальное хранение: все изменения сохраняются только на вашем устройстве. Рекомендуется периодически делать экспорт истории через Настройки.\n• Возможная нестабильность: эта сборка предназначена для тестирования и разработки, возможны непредвиденные ошибки или изменения формата данных.\n\nДля безопасной работы и синхронизации с облаком используйте официальные релизные версии.",
         "commitHash" to "Коммит",
         "buildTime" to "Дата сборки",
-        "syncDisabledInTestBuild" to "Синхронизация отключена в тестовой сборке ради сохранности истории.",
-        "testBuildDetailsTitle" to "Подробнее о тестовой сборке"
+        "testBuildDetailsTitle" to "Подробнее о тестовой сборке",
+        "btnDebts" to "Долги",
+        "debtsTitle" to "Запись долгов",
+        "iOwe" to "Я должен",
+        "owedToMe" to "Мне должны",
+        "giveDebt" to "Дать в долг",
+        "takeDebt" to "Взять в долг",
+        "personName" to "Имя",
+        "debtAmount" to "Сумма",
+        "emptyDebts" to "Записей о долгах пока нет",
+        "fullyReturned" to "Полностью вернул",
+        "editDebt" to "Изменить долг",
+        "debtAmountRemaining" to "Остаток долга",
+        "invalidName" to "Пожалуйста, введите имя",
+        "totalIOwe" to "Вы должны",
+        "totalOwedToMe" to "Вам должны",
+        "filterAll" to "Все",
+        "filterIOwe" to "Я должен",
+        "filterOwedToMe" to "Мне должны"
     )
 
     fun getString(key: String, language: AppLanguage): String {

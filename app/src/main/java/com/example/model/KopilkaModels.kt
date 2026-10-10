@@ -25,3 +25,17 @@ data class CloudData(
     val transactions: List<Transaction>,
     val deletedTxIds: List<String>
 )
+
+enum class DebtType {
+    I_OWE,      // Взять в долг (я должен)
+    OWED_TO_ME  // Дать в долг (мне должны)
+}
+
+@JsonClass(generateAdapter = true)
+data class Debt(
+    val id: String,
+    val name: String,
+    val amount: Double,
+    val type: DebtType,
+    val timestamp: Long = System.currentTimeMillis()
+)

@@ -12,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.model.KopilkaData
 import com.example.model.CloudData
 import com.example.model.Transaction
+import com.example.model.Debt
+import com.example.model.DebtType
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
+
+enum class AppScreen {
+    SETTINGS,
+    MAIN,
+    DEBTS
+}
 
 enum class SheetType {
     LANGUAGE,
@@ -113,6 +121,9 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val transactionsAdapter = moshi.adapter<List<Transaction>>(
         Types.newParameterizedType(List::class.java, Transaction::class.java)
     )
+    private val debtsAdapter = moshi.adapter<List<Debt>>(
+        Types.newParameterizedType(List::class.java, Debt::class.java)
+    )
 
     private val _balance = MutableStateFlow(0.0)
     val balance: StateFlow<Double> = _balance.asStateFlow()
@@ -122,6 +133,12 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
+
+    private val _debts = MutableStateFlow<List<Debt>>(emptyList())
+    val debts: StateFlow<List<Debt>> = _debts.asStateFlow()
+
+    private val _currentScreen = MutableStateFlow(AppScreen.MAIN)
+    val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
 
     private val _selectedLanguage = MutableStateFlow<AppLanguage?>(null)
     val selectedLanguage: StateFlow<AppLanguage?> = _selectedLanguage.asStateFlow()
@@ -238,6 +255,15 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
+        val debtsJson = prefs.getString("debts_json", null)
+        if (!debtsJson.isNullOrEmpty()) {
+            try {
+                _debts.value = debtsAdapter.fromJson(debtsJson) ?: emptyList()
+            } catch (e: Exception) {
+                _debts.value = emptyList()
+            }
+        }
+
         val unsyncedSet = prefs.getStringSet("unsynced_tx_ids", emptySet()) ?: emptySet()
         _unsyncedTxIds.value = unsyncedSet
 
@@ -279,6 +305,11 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             putString("launcher_icon_option", _launcherIconOption.value)
             try {
                 putString("transactions_json", transactionsAdapter.toJson(_transactions.value))
+            } catch (e: Exception) {
+                // Ignore serialization error
+            }
+            try {
+                putString("debts_json", debtsAdapter.toJson(_debts.value))
             } catch (e: Exception) {
                 // Ignore serialization error
             }
@@ -589,6 +620,43 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     fun clearToast() {
         _toastMessage.value = null
+    }
+
+    fun navigateTo(screen: AppScreen) {
+        _currentScreen.value = screen
+    }
+
+    fun addDebt(name: String, amount: Double, type: DebtType) {
+        val roundedAmount = Math.round(amount * 100.0) / 100.0
+        val trimmedName = name.trim().ifEmpty {
+            if (_selectedLanguage.value == AppLanguage.RU) "Без имени" else "Unnamed"
+        }
+        val newDebt = Debt(
+            id = UUID.randomUUID().toString(),
+            name = trimmedName,
+            amount = roundedAmount,
+            type = type,
+            timestamp = System.currentTimeMillis()
+        )
+        _debts.value = listOf(newDebt) + _debts.value
+        saveToPrefs()
+    }
+
+    fun updateDebtAmount(debtId: String, newAmount: Double) {
+        val roundedAmount = Math.round(newAmount * 100.0) / 100.0
+        if (roundedAmount <= 0.0) {
+            deleteDebt(debtId)
+        } else {
+            _debts.value = _debts.value.map { debt ->
+                if (debt.id == debtId) debt.copy(amount = roundedAmount) else debt
+            }
+            saveToPrefs()
+        }
+    }
+
+    fun deleteDebt(debtId: String) {
+        _debts.value = _debts.value.filter { it.id != debtId }
+        saveToPrefs()
     }
 
     // Export state as JSON String
