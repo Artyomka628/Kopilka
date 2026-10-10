@@ -200,6 +200,9 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val _showTestBuildDialog = MutableStateFlow(false)
     val showTestBuildDialog: StateFlow<Boolean> = _showTestBuildDialog.asStateFlow()
 
+    private val _showOnboarding = MutableStateFlow(false)
+    val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
+
     init {
         FirebaseManager.initialize(application)
         loadFromPrefs()
@@ -209,6 +212,16 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             syncData()
         }
         updateLauncherIconSettings()
+        if (prefs.getBoolean("onboarding_completed_v3", false)) {
+            checkTestBuildWarning()
+        } else {
+            _showOnboarding.value = true
+        }
+    }
+
+    fun completeOnboarding() {
+        prefs.edit().putBoolean("onboarding_completed_v3", true).apply()
+        _showOnboarding.value = false
         checkTestBuildWarning()
     }
 
