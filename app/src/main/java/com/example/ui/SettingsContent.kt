@@ -1021,7 +1021,7 @@ fun SettingsSheetContent(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(ElegantDarkBg),
+                                .background(ElegantCardBg),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
