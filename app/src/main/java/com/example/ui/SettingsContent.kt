@@ -49,7 +49,7 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Language/Язык",
+            text = LanguageHelper.getString("languageTitle", lang),
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = ElegantTextPrimary
@@ -60,7 +60,7 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Choose your language\nВыберите язык",
+            text = LanguageHelper.getString("languageSub", lang),
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = ElegantTextSecondary,
                 lineHeight = 22.sp
@@ -71,7 +71,7 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Note: The date language is determined by the language on the device.\n\nВажно: Дата будет отображаться на языке устройства.",
+            text = LanguageHelper.getString("languageNote", lang),
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = ElegantTextSecondary.copy(alpha = 0.7f),
                 fontSize = 13.sp,
@@ -100,7 +100,7 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "English",
+                    text = LanguageHelper.getString("btnEnglish", lang),
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color(0xFF1C1B1F),
                         fontWeight = FontWeight.Bold
@@ -120,7 +120,7 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "Русский",
+                    text = LanguageHelper.getString("btnRussian", lang),
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color(0xFF1C1B1F),
                         fontWeight = FontWeight.Bold
@@ -1244,7 +1244,7 @@ fun SettingsSheetContent(
                         }
                     ) {
                         Text(
-                            text = if (lang == AppLanguage.RU) "Да, очистить" else "Yes, clear",
+                            text = LanguageHelper.getString("confirmClearHistory", lang),
                             color = ColorSpend,
                             fontWeight = FontWeight.Bold
                         )

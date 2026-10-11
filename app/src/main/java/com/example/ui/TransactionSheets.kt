@@ -160,7 +160,7 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                         }
                         Icon(
                             imageVector = if (isCategoryDropdownExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Toggle category dropdown",
+                            contentDescription = LanguageHelper.getString("toggleCategoryDropdownDescription", lang),
                             tint = ElegantTextSecondary
                         )
                     }
@@ -678,7 +678,7 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
                         ) {
                             Text(
-                                text = if (lang == AppLanguage.RU) "Понятно" else "I Understand",
+                                text = LanguageHelper.getString("understand", lang),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
@@ -869,7 +869,7 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = "OK",
+                text = LanguageHelper.getString("ok", lang),
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = ElegantBtnText,
                     fontWeight = FontWeight.Bold

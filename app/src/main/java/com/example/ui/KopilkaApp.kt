@@ -284,7 +284,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
                         ) {
                             Text(
-                                text = if (lang == AppLanguage.RU) "Понятно" else "I Understand",
+                                text = LanguageHelper.getString("understand", lang),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )

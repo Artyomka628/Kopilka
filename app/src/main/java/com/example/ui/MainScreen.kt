@@ -84,7 +84,7 @@ fun MainScreen(
             onDismissRequest = { transactionToCancel = null },
             title = {
                 Text(
-                    text = if (lang == AppLanguage.RU) "Отмена операции" else "Cancel Operation",
+                    text = LanguageHelper.getString("cancelOperationTitle", lang),
                     color = ElegantTextPrimary,
                     fontWeight = FontWeight.Bold
                 )
@@ -105,7 +105,7 @@ fun MainScreen(
                     }
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.RU) "Подтвердить" else "Confirm",
+                        text = LanguageHelper.getString("confirm", lang),
                         color = ColorSpend,
                         fontWeight = FontWeight.Bold
                     )
@@ -116,7 +116,7 @@ fun MainScreen(
                     onClick = { transactionToCancel = null }
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.RU) "Отмена" else "Cancel",
+                        text = LanguageHelper.getString("cancel", lang),
                         color = ElegantTextPrimary
                     )
                 }
@@ -161,7 +161,7 @@ fun MainScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (lang == AppLanguage.RU) "История" else "History",
+                text = LanguageHelper.getString("historyTitle", lang),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = ElegantTextPrimary
@@ -270,7 +270,7 @@ fun HeaderRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.SyncProblem,
-                        contentDescription = "Sync Info",
+                        contentDescription = LanguageHelper.getString("syncInfoDescription", lang),
                         tint = Color(0xFFE53935)
                     )
                     Text(text = syncDialogTitle, color = ElegantTextPrimary, fontWeight = FontWeight.Bold)
@@ -375,7 +375,7 @@ fun HeaderRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudDone,
-                        contentDescription = "Synced successfully",
+                        contentDescription = LanguageHelper.getString("syncedSuccessfullyDescription", lang),
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
@@ -406,7 +406,7 @@ fun HeaderRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.SyncProblem,
-                        contentDescription = "Sync warning",
+                        contentDescription = LanguageHelper.getString("syncWarningDescription", lang),
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
@@ -424,7 +424,7 @@ fun HeaderRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CloudOff,
-                        contentDescription = "Cloud sync disabled in test build",
+                        contentDescription = LanguageHelper.getString("cloudSyncDisabledDescription", lang),
                         tint = Color(0xFFFF9800),
                         modifier = Modifier.size(20.dp)
                     )
@@ -479,7 +479,7 @@ fun BalanceSummaryCard(
                 .padding(20.dp)
         ) {
             Text(
-                text = if (lang == AppLanguage.RU) "Текущий баланс" else "Current Balance",
+                text = LanguageHelper.getString("currentBalance", lang),
                 style = MaterialTheme.typography.labelMedium.copy(
                     color = ElegantLavender,
                     fontWeight = FontWeight.Bold,
@@ -539,7 +539,7 @@ fun BalanceSummaryCard(
                                 horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 Text(
-                                    text = if (lang == AppLanguage.RU) "Вам:" else "To you:",
+                                    text = LanguageHelper.getString("toYouLabel", lang),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         color = ColorTopUp,
                                         fontWeight = FontWeight.Medium,
@@ -567,7 +567,7 @@ fun BalanceSummaryCard(
                                 horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 Text(
-                                    text = if (lang == AppLanguage.RU) "Вы:" else "You owe:",
+                                    text = LanguageHelper.getString("youOweLabel", lang),
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         color = ColorSpend,
                                         fontWeight = FontWeight.Medium,
@@ -597,7 +597,7 @@ fun BalanceSummaryCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (lang == AppLanguage.RU) "ПРИХОД" else "IN",
+                        text = LanguageHelper.getString("incomeSummaryLabel", lang).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = ElegantTextTertiary,
                             fontSize = 11.sp,
@@ -625,7 +625,7 @@ fun BalanceSummaryCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (lang == AppLanguage.RU) "РАСХОД" else "OUT",
+                        text = LanguageHelper.getString("expenseSummaryLabel", lang).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = ElegantTextTertiary,
                             fontSize = 11.sp,

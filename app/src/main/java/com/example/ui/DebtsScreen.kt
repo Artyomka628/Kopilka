@@ -108,7 +108,7 @@ fun DebtsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = LanguageHelper.getString("back", lang),
                             tint = ElegantTextPrimary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -653,7 +653,7 @@ fun AddDebtSheetContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
+                    contentDescription = LanguageHelper.getString("confirm", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
@@ -670,7 +670,7 @@ fun AddDebtSheetContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )
@@ -809,7 +809,7 @@ fun EditDebtSheetContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Save",
+                    contentDescription = LanguageHelper.getString("save", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
