@@ -240,9 +240,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun continueInteractiveOnboarding() {
-        when (_onboardingStep.value) {
-            0 -> _onboardingStep.value = 1
-            5 -> _onboardingStep.value = 6
+        if (_onboardingStep.value == 0) {
+            _onboardingStep.value = 1
         }
     }
 
@@ -609,7 +608,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             val allowed = when (_onboardingStep.value) {
                 1 -> type == SheetType.TOP_UP
                 2 -> type == SheetType.SPEND
-                5 -> type in setOf(
+                7 -> type in setOf(
                     SheetType.SET_GOAL,
                     SheetType.COUNT_MONEY,
                     SheetType.ABOUT_APP,
@@ -769,8 +768,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                     _onboardingStep.value = 2
                 }
                 _onboardingStep.value == 2 && roundedAmount < 0.0 -> {
+                    // Let the user choose how to reach Debts instead of navigating automatically.
                     _onboardingStep.value = 3
-                    _currentScreen.value = AppScreen.DEBTS
                 }
             }
         }
@@ -790,12 +789,23 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     fun navigateTo(screen: AppScreen) {
         if (_showOnboarding.value) {
-            val guidedScreen = when (_onboardingStep.value) {
-                0, 1, 2 -> AppScreen.MAIN
-                3, 4 -> AppScreen.DEBTS
-                else -> AppScreen.SETTINGS
+            when (_onboardingStep.value) {
+                0, 1, 2 -> if (screen != AppScreen.MAIN) return
+                3 -> {
+                    // Step 3 intentionally allows either swipe direction; only Debts advances the tour.
+                    if (screen == AppScreen.DEBTS) {
+                        _onboardingStep.value = 4
+                    }
+                }
+                4, 5 -> if (screen != AppScreen.DEBTS) return
+                6 -> {
+                    // Step 6 teaches the Settings shortcut/swipe from the main screen.
+                    if (screen == AppScreen.SETTINGS) {
+                        _onboardingStep.value = 7
+                    }
+                }
+                else -> if (screen != AppScreen.SETTINGS) return
             }
-            if (screen != guidedScreen) return
         }
         _currentScreen.value = screen
     }
@@ -822,7 +832,11 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 }
                 _onboardingStep.value == 4 && type == DebtType.I_OWE -> {
                     _onboardingStep.value = 5
-                    _currentScreen.value = AppScreen.SETTINGS
+                }
+                _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
+                    _onboardingStep.value = 6
+                    // Return to the main screen so the next prompt can teach the Settings swipe.
+                    _currentScreen.value = AppScreen.MAIN
                 }
             }
             _onboardingInteractionOpen.value = false
