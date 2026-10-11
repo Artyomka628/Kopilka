@@ -135,7 +135,7 @@ internal object RussianStrings {
         "totalOwedToMe" to "Вам должны",
         "filterAll" to "Все",
         "filterIOwe" to "Я должен",
-        "filterOwedToMe" to "Мне должны"
+        "filterOwedToMe" to "Мне должны",
         "onboardingPracticeLabel" to "Практика (деморежим)",
         "onboardingTapToPractice" to "Попробуйте действие ниже, чтобы продолжить. Это безопасная демонстрация: настоящий баланс и записи о долгах не изменятся.",
         "onboardingDemoAdd" to "Добавить 10 демо-монет",
