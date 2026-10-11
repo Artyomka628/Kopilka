@@ -153,7 +153,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = !showOnboarding
+                userScrollEnabled = !showOnboarding || onboardingStep == 3 || onboardingStep == 6
             ) { page ->
                 when (page) {
                     0 -> {
@@ -217,7 +217,9 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     step = onboardingStep,
                     onContinue = { viewModel.continueInteractiveOnboarding() },
                     onSkip = { viewModel.finishInteractiveOnboarding() },
-                    onFinish = { viewModel.finishInteractiveOnboarding() }
+                    onFinish = { viewModel.finishInteractiveOnboarding() },
+                    onOpenDebts = { viewModel.navigateTo(AppScreen.DEBTS) },
+                    onOpenSettings = { viewModel.navigateTo(AppScreen.SETTINGS) }
                 )
             }
 
