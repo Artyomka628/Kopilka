@@ -27,8 +27,8 @@ data class CloudData(
 )
 
 enum class DebtType {
-    I_OWE,      // Взять в долг (я должен)
-    OWED_TO_ME  // Дать в долг (мне должны)
+    I_OWE,      // To borrow (I owe)
+    OWED_TO_ME  // To lend (Owed to me)
 }
 
 @JsonClass(generateAdapter = true)

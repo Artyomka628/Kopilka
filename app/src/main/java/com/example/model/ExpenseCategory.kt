@@ -7,14 +7,15 @@ import com.example.ui.AppLanguage
 
 /**
  * ============================================================================
- * СЛОВАРЬ КАТЕГОРИЙ РАСХОДОВ (EXPENSE CATEGORIES DICTIONARY)
+ * EXPENSE CATEGORIES DICTIONARY
  * ============================================================================
  *
- * Хранится как словарь: "Название категории" to Иконка (ImageVector).
- * Чтобы легко изменить, добавить или удалить категории в коде:
- * 1. Добавьте или измените строку вида: "Название" to Icons.Default.Иконка,
- * 2. Категория автоматически появится в интерфейсе при добавлении расхода!
+ * Stored as a dictionary: "Category Name" to Icon (ImageVector). 
+ * To easily change, add, or remove categories in the code:
+ * 1. Add or modify a line like: "Name" to Icons.Default.Icon,
+ * 2. The category will automatically appear in the interface when adding an expense!
  */
+
 val CATEGORY_DICTIONARY: Map<String, ImageVector> = linkedMapOf(
     "Еда и напитки" to Icons.Default.Restaurant,
     "Развлечения и культура" to Icons.Default.Movie,
@@ -130,13 +131,13 @@ data class ExpenseCategory(
         fun fromId(id: String?): ExpenseCategory {
             if (id.isNullOrBlank()) return OTHER
 
-            // 1. Прямое совпадение по названию из словаря
+            // 1. Exact name match from the dictionary
             val exactIcon = CATEGORY_DICTIONARY[id]
             if (exactIcon != null) {
                 return ExpenseCategory(name = id, icon = exactIcon)
             }
 
-            // 2. Поиск без учета регистра
+            // 2. Case-insensitive search
             val match = CATEGORY_DICTIONARY.entries.firstOrNull {
                 it.key.equals(id, ignoreCase = true)
             }
@@ -144,7 +145,7 @@ data class ExpenseCategory(
                 return ExpenseCategory(name = match.key, icon = match.value)
             }
 
-            // 3. Совпадение по английскому названию
+            // 3. Match based on English name
             val reverseEnMatch = CATEGORY_TRANSLATIONS_EN.entries.firstOrNull {
                 it.value.equals(id, ignoreCase = true)
             }
@@ -155,7 +156,7 @@ data class ExpenseCategory(
                 )
             }
 
-            // 4. По умолчанию для неизвестных категорий
+            // 4. Default for unknown categories
             return OTHER
         }
     }

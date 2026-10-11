@@ -144,7 +144,7 @@ fun DebtsScreen(
                         .padding(18.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Owed to me (Вам должны)
+                    // Owed to me
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = LanguageHelper.getString("totalOwedToMe", lang).uppercase(),
@@ -179,7 +179,7 @@ fun DebtsScreen(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    // I owe (Вы должны)
+                    // I owe
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = LanguageHelper.getString("totalIOwe", lang).uppercase(),
@@ -209,12 +209,12 @@ fun DebtsScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Action buttons: "Дать в долг" & "Взять в долг"
+            // Action buttons:
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Give debt (Дать в долг -> мне должны)
+                // Give debt
                 Button(
                     onClick = {
                         addDebtType = DebtType.OWED_TO_ME
@@ -251,7 +251,7 @@ fun DebtsScreen(
                     )
                 }
 
-                // Take debt (Взять в долг -> я должен)
+                // Take debt
                 Button(
                     onClick = {
                         addDebtType = DebtType.I_OWE
@@ -291,7 +291,7 @@ fun DebtsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter chips (Все / Мне должны / Я должен)
+            // Filter chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -403,7 +403,7 @@ fun DebtsScreen(
         }
     }
 
-    // Modal Bottom Sheet: Edit Debt (Изменить сколько ты/он должен + кнопка полностью вернул)
+    // Modal Bottom Sheet: Edit Debt
     editingDebt?.let { debt ->
         ModalBottomSheet(
             onDismissRequest = { editingDebt = null },
@@ -754,7 +754,7 @@ fun EditDebtSheetContent(
             )
         }
 
-        // Big "Fully Returned" (Полностью вернул) Button
+        // Big "Fully Returned"
         Button(
             onClick = onFullyReturned,
             modifier = Modifier
