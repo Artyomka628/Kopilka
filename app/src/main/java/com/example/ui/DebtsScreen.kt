@@ -100,6 +100,11 @@ fun DebtsScreen(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF35343A))
+                            .onGloballyPositioned {
+                                if (tutorialStep == 6) {
+                                    onTutorialTarget(6, it.boundsInRoot().center.y)
+                                }
+                            }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
