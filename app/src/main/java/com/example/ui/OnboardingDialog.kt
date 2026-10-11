@@ -63,8 +63,9 @@ fun OnboardingDialog(
         0 -> "onboardingWelcomeTitle"
         1 -> "onboardingIncomeTitle"
         2 -> "onboardingSpendTitle"
-        3, 4, 5 -> "onboardingDebtsTitle"
-        else -> "onboardingSettingsTitle"
+        3, 4, 5, 6 -> "onboardingDebtsTitle"
+        7, 8 -> "onboardingSettingsTitle"
+        else -> "onboardingTourFinishTitle"
     }
     val descriptionKey = when (step) {
         0 -> "onboardingTourIntroText"
@@ -73,11 +74,13 @@ fun OnboardingDialog(
         3 -> "onboardingTourGoDebtsText"
         4 -> "onboardingTourLendText"
         5 -> "onboardingTourBorrowText"
-        6 -> "onboardingTourGoSettingsText"
-        else -> "onboardingTourSettingsText"
+        6 -> "onboardingTourReturnFromDebtsText"
+        7 -> "onboardingTourGoSettingsText"
+        8 -> "onboardingTourSettingsText"
+        else -> "onboardingTourFinishText"
     }
     val strings = { key: String -> LanguageHelper.getString(key, lang) }
-    val finalStep = step >= 7
+    val finalStep = step >= 9
     val hasContinueAction = step == 0 || finalStep
     val density = LocalDensity.current
     val edgeMarginPx = with(density) { 16.dp.roundToPx() }
@@ -87,7 +90,7 @@ fun OnboardingDialog(
     var overlayOriginY by remember { mutableStateOf(0f) }
     var dragOffset by remember(step) { mutableStateOf(IntOffset.Zero) }
 
-    val fallbackTargetIsUpperHalf = step in 4..7
+    val fallbackTargetIsUpperHalf = step in 4..8
     val targetCenterY = targetCenterYInRoot?.minus(overlayOriginY)
     val targetIsUpperHalf = targetCenterY?.let {
         it < containerSize.height / 2f
@@ -177,7 +180,7 @@ fun OnboardingDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${strings("onboardingTourStep")} ${step + 1}/8",
+                        text = "${strings("onboardingTourStep")} ${step + 1}/10",
                         color = ElegantTextSecondary,
                         style = MaterialTheme.typography.labelMedium
                     )
