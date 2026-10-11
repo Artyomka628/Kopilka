@@ -24,6 +24,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +43,12 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
+fun DebtsScreen(
+    viewModel: KopilkaViewModel,
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
+) {
     BackHandler {
         viewModel.navigateTo(AppScreen.MAIN)
     }
@@ -211,7 +218,12 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .height(52.dp)
+                        .onGloballyPositioned {
+                            if (tutorialStep == 4) {
+                                onTutorialTarget(4, it.boundsInRoot().center.y)
+                            }
+                        },
                     colors = ButtonDefaults.buttonColors(containerColor = ColorTopUp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -243,7 +255,12 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .height(52.dp)
+                        .onGloballyPositioned {
+                            if (tutorialStep == 5) {
+                                onTutorialTarget(5, it.boundsInRoot().center.y)
+                            }
+                        },
                     colors = ButtonDefaults.buttonColors(containerColor = ColorSpend),
                     shape = RoundedCornerShape(16.dp)
                 ) {
