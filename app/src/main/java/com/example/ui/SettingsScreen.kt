@@ -9,6 +9,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +25,9 @@ fun SettingsScreen(
     viewModel: KopilkaViewModel,
     onSaveClick: () -> Unit,
     onLoadClick: () -> Unit,
-    lang: AppLanguage
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
 ) {
     BackHandler {
         viewModel.navigateTo(AppScreen.MAIN)
@@ -50,6 +54,11 @@ fun SettingsScreen(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF35343A))
+                            .onGloballyPositioned {
+                                if (tutorialStep == 8) {
+                                    onTutorialTarget(8, it.boundsInRoot().center.y)
+                                }
+                            }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
