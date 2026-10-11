@@ -35,28 +35,31 @@ fun OnboardingDialog(
     step: Int,
     onContinue: () -> Unit,
     onSkip: () -> Unit,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    onOpenDebts: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val titleKey = when (step) {
         0 -> "onboardingWelcomeTitle"
         1 -> "onboardingIncomeTitle"
         2 -> "onboardingSpendTitle"
-        3, 4 -> "onboardingDebtsTitle"
-        5 -> "onboardingSettingsTitle"
-        else -> "onboardingAccountTitle"
+        3, 4, 5 -> "onboardingDebtsTitle"
+        else -> "onboardingSettingsTitle"
     }
     val descriptionKey = when (step) {
         0 -> "onboardingTourIntroText"
         1 -> "onboardingTourIncomeText"
         2 -> "onboardingTourExpenseText"
-        3 -> "onboardingTourLendText"
-        4 -> "onboardingTourBorrowText"
-        5 -> "onboardingTourSettingsText"
-        else -> "onboardingTourAccountText"
+        3 -> "onboardingTourGoDebtsText"
+        4 -> "onboardingTourLendText"
+        5 -> "onboardingTourBorrowText"
+        6 -> "onboardingTourGoSettingsText"
+        else -> "onboardingTourSettingsText"
     }
     val strings = { key: String -> LanguageHelper.getString(key, lang) }
-    val finalStep = step >= 6
-    val hasContinueAction = step == 0 || step == 5 || finalStep
+    val finalStep = step >= 7
+    val hasContinueAction = step == 0 || finalStep
+    val hasNavigationAction = step == 3 || step == 6
     val alignment = if (step <= 2 || step >= 5) Alignment.TopCenter else Alignment.BottomCenter
 
     Box(
@@ -85,7 +88,7 @@ fun OnboardingDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${strings("onboardingTourStep")} ${step + 1}/7",
+                        text = "${strings("onboardingTourStep")} ${step + 1}/8",
                         color = ElegantTextSecondary,
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -107,10 +110,15 @@ fun OnboardingDialog(
                     style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp)
                 )
 
-                if (hasContinueAction) {
+                if (hasContinueAction || hasNavigationAction) {
                     Button(
                         onClick = {
-                            if (finalStep) onFinish() else onContinue()
+                            when {
+                                step == 3 -> onOpenDebts()
+                                step == 6 -> onOpenSettings()
+                                finalStep -> onFinish()
+                                else -> onContinue()
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
@@ -120,6 +128,8 @@ fun OnboardingDialog(
                             text = strings(
                                 when {
                                     step == 0 -> "onboardingTourStart"
+                                    step == 3 -> "onboardingTourOpenDebts"
+                                    step == 6 -> "onboardingTourOpenSettings"
                                     finalStep -> "onboardingTourFinish"
                                     else -> "onboardingTourContinue"
                                 }
