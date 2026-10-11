@@ -439,8 +439,8 @@ fun HeaderRow(
                     .clip(CircleShape)
                     .background(ElegantCardBg)
                     .onGloballyPositioned {
-                        if (tutorialStep == 6) {
-                            onTutorialTarget(6, it.boundsInRoot().center.y)
+                        if (tutorialStep == 7) {
+                            onTutorialTarget(7, it.boundsInRoot().center.y)
                         }
                     }
             ) {
