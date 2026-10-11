@@ -827,10 +827,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
         if (_showOnboarding.value) {
             when {
-                _onboardingStep.value == 3 && type == DebtType.OWED_TO_ME -> {
-                    _onboardingStep.value = 4
-                }
-                _onboardingStep.value == 4 && type == DebtType.I_OWE -> {
+                _onboardingStep.value == 4 && type == DebtType.OWED_TO_ME -> {
                     _onboardingStep.value = 5
                 }
                 _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
