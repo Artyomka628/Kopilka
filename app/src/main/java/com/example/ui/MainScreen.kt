@@ -27,6 +27,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -43,7 +45,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
+fun MainScreen(
+    viewModel: KopilkaViewModel,
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
+) {
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val goal by viewModel.goal.collectAsStateWithLifecycle()
     val transactions by viewModel.transactions.collectAsStateWithLifecycle()
@@ -128,7 +135,7 @@ fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         // App Header Row matching layout of top bar
-        HeaderRow(viewModel = viewModel, lang = lang)
+        HeaderRow(viewModel = viewModel, lang = lang, tutorialStep = tutorialStep, onTutorialTarget = onTutorialTarget)
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -214,12 +221,17 @@ fun MainScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
         }
 
         // Bottom action choices
-        BottomControlsRow(viewModel = viewModel, lang = lang)
+        BottomControlsRow(viewModel = viewModel, lang = lang, tutorialStep = tutorialStep, onTutorialTarget = onTutorialTarget)
     }
 }
 
 @Composable
-fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
+fun HeaderRow(
+    viewModel: KopilkaViewModel,
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
+) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
     val ElegantBtnText = Color(0xFF1C1B1F)
 
@@ -426,6 +438,11 @@ fun HeaderRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(ElegantCardBg)
+                    .onGloballyPositioned {
+                        if (tutorialStep == 6) {
+                            onTutorialTarget(6, it.boundsInRoot().center.y)
+                        }
+                    }
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
@@ -851,7 +868,12 @@ fun TransactionItemRow(
 }
 
 @Composable
-fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
+fun BottomControlsRow(
+    viewModel: KopilkaViewModel,
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
+) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
 
     Column(
@@ -869,7 +891,12 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                 onClick = { viewModel.showSheet(SheetType.SPEND) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
+                    .height(52.dp)
+                    .onGloballyPositioned {
+                        if (tutorialStep == 2) {
+                            onTutorialTarget(2, it.boundsInRoot().center.y)
+                        }
+                    },
                 colors = ButtonDefaults.buttonColors(containerColor = ColorSpend),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -895,7 +922,12 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
                 onClick = { viewModel.showSheet(SheetType.TOP_UP) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
+                    .height(52.dp)
+                    .onGloballyPositioned {
+                        if (tutorialStep == 1) {
+                            onTutorialTarget(1, it.boundsInRoot().center.y)
+                        }
+                    },
                 colors = ButtonDefaults.buttonColors(containerColor = ColorTopUp),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -922,7 +954,12 @@ fun BottomControlsRow(viewModel: KopilkaViewModel, lang: AppLanguage) {
             onClick = { viewModel.navigateTo(AppScreen.DEBTS) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(52.dp)
+                .onGloballyPositioned {
+                    if (tutorialStep == 3) {
+                        onTutorialTarget(3, it.boundsInRoot().center.y)
+                    }
+                },
             colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
             shape = RoundedCornerShape(16.dp)
         ) {
