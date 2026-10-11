@@ -135,7 +135,7 @@ internal object EnglishStrings {
         "totalOwedToMe" to "Owed to me",
         "filterAll" to "All",
         "filterIOwe" to "I owe",
-        "filterOwedToMe" to "Owed to me"
+        "filterOwedToMe" to "Owed to me",
         "onboardingPracticeLabel" to "Practice (demo only)",
         "onboardingTapToPractice" to "Try the action below to continue. This is a safe demo and will not change your real balance or debt records.",
         "onboardingDemoAdd" to "Add 10 demo coins",
