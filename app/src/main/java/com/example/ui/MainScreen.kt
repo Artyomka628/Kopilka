@@ -960,7 +960,7 @@ fun BottomControlsRow(
                         onTutorialTarget(3, it.boundsInRoot().center.y)
                     }
                 },
-            colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
+            colors = ButtonDefaults.buttonColors(containerColor = ColorSettings),
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(
