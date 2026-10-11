@@ -17,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.collect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -114,7 +113,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
     val reportOnboardingTarget: (Int, Float) -> Unit = { targetStep, targetCenterY ->
         if (targetStep == onboardingStep) {
             val previous = onboardingTarget
-            if (previous?.first != targetStep || previous.second.let { abs(it - targetCenterY) > 2f }) {
+            if (previous == null || previous.first != targetStep || abs(previous.second - targetCenterY) > 2f) {
                 onboardingTarget = targetStep to targetCenterY
             }
         }
