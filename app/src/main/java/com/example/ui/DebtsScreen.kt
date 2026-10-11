@@ -207,6 +207,7 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     onClick = {
                         addDebtType = DebtType.OWED_TO_ME
                         showAddSheet = true
+                        viewModel.setOnboardingInteractionOpen(true)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -238,6 +239,7 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     onClick = {
                         addDebtType = DebtType.I_OWE
                         showAddSheet = true
+                        viewModel.setOnboardingInteractionOpen(true)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -355,7 +357,10 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     // Modal Bottom Sheet: Add Debt
     if (showAddSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false },
+            onDismissRequest = {
+                showAddSheet = false
+                viewModel.setOnboardingInteractionOpen(false)
+            },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             containerColor = ElegantCardBg,
             contentColor = ElegantTextPrimary,
@@ -368,7 +373,10 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     viewModel.addDebt(name, amount, addDebtType)
                     showAddSheet = false
                 },
-                onCancel = { showAddSheet = false }
+                onCancel = {
+                    showAddSheet = false
+                    viewModel.setOnboardingInteractionOpen(false)
+                }
             )
         }
     }

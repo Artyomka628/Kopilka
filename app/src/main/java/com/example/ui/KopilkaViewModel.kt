@@ -203,8 +203,28 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val _showOnboarding = MutableStateFlow(false)
     val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
 
+    private val _onboardingStep = MutableStateFlow(0)
+    val onboardingStep: StateFlow<Int> = _onboardingStep.asStateFlow()
+
+    private val _onboardingInteractionOpen = MutableStateFlow(false)
+    val onboardingInteractionOpen: StateFlow<Boolean> = _onboardingInteractionOpen.asStateFlow()
+
+    private val onboardingBackupKey = "interactive_onboarding_backup"
+    private val onboardingSnapshotKeys = listOf(
+        "balance", "goal", "transactions_json", "debts_json",
+        "unsynced_tx_ids", "deleted_tx_ids",
+        "custom_currency_enabled", "custom_currency_symbol", "goal_progress_hidden",
+        "stats_reset_frequency", "last_reset_timestamp", "selected_language",
+        "current_theme", "custom_theme_color", "launcher_icon_option"
+    )
+    private val onboardingBooleanKeys = setOf("custom_currency_enabled", "goal_progress_hidden")
+    private val onboardingFloatKeys = setOf("balance", "goal")
+    private val onboardingLongKeys = setOf("last_reset_timestamp", "custom_theme_color")
+    private val onboardingSetKeys = setOf("unsynced_tx_ids", "deleted_tx_ids")
+
     init {
         FirebaseManager.initialize(application)
+        restoreTutorialBackupIfNeeded()
         loadFromPrefs()
         _currentUserEmail.value = FirebaseManager.getCurrentUserEmail()
         checkAndPerformAutomaticReset()
@@ -214,15 +234,113 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         updateLauncherIconSettings()
         if (prefs.getBoolean("onboarding_completed_v3", false)) {
             checkTestBuildWarning()
-        } else {
-            _showOnboarding.value = true
+        } else if (_selectedLanguage.value != null) {
+            startInteractiveOnboarding()
         }
     }
 
-    fun completeOnboarding() {
-        prefs.edit().putBoolean("onboarding_completed_v3", true).apply()
+    fun continueInteractiveOnboarding() {
+        when (_onboardingStep.value) {
+            0 -> _onboardingStep.value = 1
+            5 -> _onboardingStep.value = 6
+        }
+    }
+
+    fun setOnboardingInteractionOpen(open: Boolean) {
+        if (_showOnboarding.value) {
+            _onboardingInteractionOpen.value = open
+        }
+    }
+
+    fun finishInteractiveOnboarding() {
+        if (!restoreTutorialBackupIfNeeded()) {
+            showToast(LanguageHelper.getString("onboardingRestoreFailed", _selectedLanguage.value ?: AppLanguage.RU))
+            return
+        }
+        loadFromPrefs()
+        prefs.edit().putBoolean("onboarding_completed_v3", true).commit()
+        _currentSheet.value = null
+        _currentScreen.value = AppScreen.MAIN
+        _onboardingInteractionOpen.value = false
+        _onboardingStep.value = 0
         _showOnboarding.value = false
         checkTestBuildWarning()
+    }
+
+    private fun startInteractiveOnboarding() {
+        if (_selectedLanguage.value == null ||
+            prefs.getBoolean("onboarding_completed_v3", false) ||
+            _showOnboarding.value
+        ) return
+
+        if (!saveTutorialBackup()) {
+            showToast(LanguageHelper.getString("onboardingBackupFailed", _selectedLanguage.value ?: AppLanguage.RU))
+            return
+        }
+
+        _currentSheet.value = null
+        _currentScreen.value = AppScreen.MAIN
+        _onboardingInteractionOpen.value = false
+        _onboardingStep.value = 0
+        _showOnboarding.value = true
+    }
+
+    private fun saveTutorialBackup(): Boolean {
+        return try {
+            val snapshot = org.json.JSONObject()
+            val allPrefs = prefs.all
+            onboardingSnapshotKeys.forEach { key ->
+                if (!allPrefs.containsKey(key)) {
+                    snapshot.put(key, org.json.JSONObject.NULL)
+                } else {
+                    val value = allPrefs[key]
+                    if (value is Set<*>) {
+                        val array = org.json.JSONArray()
+                        value.filterIsInstance<String>().forEach(array::put)
+                        snapshot.put(key, array)
+                    } else {
+                        snapshot.put(key, value)
+                    }
+                }
+            }
+            prefs.edit().putString(onboardingBackupKey, snapshot.toString()).commit()
+        } catch (e: Exception) {
+            Log.e("KopilkaViewModel", "Failed to back up data before onboarding", e)
+            false
+        }
+    }
+
+    private fun restoreTutorialBackupIfNeeded(): Boolean {
+        val raw = prefs.getString(onboardingBackupKey, null) ?: return false
+        return try {
+            val snapshot = org.json.JSONObject(raw)
+            val editor = prefs.edit()
+
+            onboardingSnapshotKeys.forEach { key ->
+                if (!snapshot.has(key) || snapshot.isNull(key)) {
+                    editor.remove(key)
+                } else {
+                    when {
+                        key in onboardingBooleanKeys -> editor.putBoolean(key, snapshot.getBoolean(key))
+                        key in onboardingFloatKeys -> editor.putFloat(key, snapshot.getDouble(key).toFloat())
+                        key in onboardingLongKeys -> editor.putLong(key, snapshot.getLong(key))
+                        key in onboardingSetKeys -> {
+                            val array = snapshot.getJSONArray(key)
+                            val values = buildSet {
+                                for (index in 0 until array.length()) add(array.getString(index))
+                            }
+                            editor.putStringSet(key, values)
+                        }
+                        else -> editor.putString(key, snapshot.getString(key))
+                    }
+                }
+            }
+
+            editor.remove(onboardingBackupKey).commit()
+        } catch (e: Exception) {
+            Log.e("KopilkaViewModel", "Failed to restore data after onboarding", e)
+            false
+        }
     }
 
     private fun checkTestBuildWarning() {
@@ -266,6 +384,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _transactions.value = emptyList()
             }
+        } else {
+            _transactions.value = emptyList()
         }
 
         val debtsJson = prefs.getString("debts_json", null)
@@ -275,6 +395,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _debts.value = emptyList()
             }
+        } else {
+            _debts.value = emptyList()
         }
 
         val unsyncedSet = prefs.getStringSet("unsynced_tx_ids", emptySet()) ?: emptySet()
@@ -331,8 +453,12 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setLanguage(lang: AppLanguage) {
+        val languageWasUnset = _selectedLanguage.value == null
         _selectedLanguage.value = lang
         saveToPrefs()
+        if (languageWasUnset && !prefs.getBoolean("onboarding_completed_v3", false)) {
+            startInteractiveOnboarding()
+        }
     }
 
     fun setTheme(theme: AppTheme) {
@@ -622,6 +748,19 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         _balance.value = Math.round((_balance.value + roundedAmount) * 100.0) / 100.0
         _unsyncedTxIds.value = _unsyncedTxIds.value + newTx.id
         saveToPrefs()
+
+        if (_showOnboarding.value) {
+            when {
+                _onboardingStep.value == 1 && roundedAmount > 0.0 -> {
+                    _onboardingStep.value = 2
+                }
+                _onboardingStep.value == 2 && roundedAmount < 0.0 -> {
+                    _onboardingStep.value = 3
+                    _currentScreen.value = AppScreen.DEBTS
+                }
+            }
+        }
+
         if (FirebaseManager.isUserSignedIn()) {
             syncData()
         }
@@ -653,6 +792,19 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         )
         _debts.value = listOf(newDebt) + _debts.value
         saveToPrefs()
+
+        if (_showOnboarding.value) {
+            when {
+                _onboardingStep.value == 3 && type == DebtType.OWED_TO_ME -> {
+                    _onboardingStep.value = 4
+                }
+                _onboardingStep.value == 4 && type == DebtType.I_OWE -> {
+                    _onboardingStep.value = 5
+                    _currentScreen.value = AppScreen.SETTINGS
+                }
+            }
+            _onboardingInteractionOpen.value = false
+        }
     }
 
     fun updateDebtAmount(debtId: String, newAmount: Double) {
@@ -889,6 +1041,11 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private var syncTimeoutJob: kotlinx.coroutines.Job? = null
 
     fun syncData(showExplicitToast: Boolean = false) {
+        if (_showOnboarding.value) {
+            _isSyncing.value = false
+            return
+        }
+
         if (com.example.BuildConfig.DEBUG) {
             _isSyncing.value = false
             if (showExplicitToast) {

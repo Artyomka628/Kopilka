@@ -106,6 +106,8 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
 
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
     val showOnboarding by viewModel.showOnboarding.collectAsStateWithLifecycle()
+    val onboardingStep by viewModel.onboardingStep.collectAsStateWithLifecycle()
+    val onboardingInteractionOpen by viewModel.onboardingInteractionOpen.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
 
     // Update the selected screen only after the user's swipe has settled.
@@ -150,7 +152,8 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
         ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = !showOnboarding
             ) { page ->
                 when (page) {
                     0 -> {
@@ -208,10 +211,13 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                 }
             }
 
-            if (showOnboarding) {
+            if (showOnboarding && currentSheet == null && !onboardingInteractionOpen) {
                 OnboardingDialog(
                     lang = lang,
-                    onFinish = { viewModel.completeOnboarding() }
+                    step = onboardingStep,
+                    onContinue = { viewModel.continueInteractiveOnboarding() },
+                    onSkip = { viewModel.finishInteractiveOnboarding() },
+                    onFinish = { viewModel.finishInteractiveOnboarding() }
                 )
             }
 
