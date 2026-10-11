@@ -792,19 +792,39 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             when (_onboardingStep.value) {
                 0, 1, 2 -> if (screen != AppScreen.MAIN) return
                 3 -> {
-                    // Step 3 intentionally allows either swipe direction; only Debts advances the tour.
                     if (screen == AppScreen.DEBTS) {
                         _onboardingStep.value = 4
+                    } else if (screen != AppScreen.MAIN) {
+                        return
                     }
                 }
                 4, 5 -> if (screen != AppScreen.DEBTS) return
                 6 -> {
-                    // Step 6 teaches the Settings shortcut/swipe from the main screen.
-                    if (screen == AppScreen.SETTINGS) {
+                    // The user must leave Debts themselves before the Settings lesson begins.
+                    if (screen == AppScreen.MAIN) {
                         _onboardingStep.value = 7
+                    } else if (screen != AppScreen.DEBTS) {
+                        return
                     }
                 }
-                else -> if (screen != AppScreen.SETTINGS) return
+                7 -> {
+                    // Open Settings through its real button or a swipe.
+                    if (screen == AppScreen.SETTINGS) {
+                        _onboardingStep.value = 8
+                    } else if (screen != AppScreen.MAIN) {
+                        return
+                    }
+                }
+                8 -> {
+                    // Finish the tour only after the user returns from Settings.
+                    if (screen == AppScreen.MAIN) {
+                        _onboardingStep.value = 9
+                    } else if (screen != AppScreen.SETTINGS) {
+                        return
+                    }
+                }
+                9 -> if (screen != AppScreen.MAIN) return
+                else -> if (screen != AppScreen.MAIN) return
             }
         }
         _currentScreen.value = screen
@@ -831,9 +851,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                     _onboardingStep.value = 5
                 }
                 _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
+                    // Keep the user on Debts and explain how to return to the main screen.
                     _onboardingStep.value = 6
-                    // Return to the main screen so the next prompt can teach the Settings swipe.
-                    _currentScreen.value = AppScreen.MAIN
                 }
             }
             _onboardingInteractionOpen.value = false
