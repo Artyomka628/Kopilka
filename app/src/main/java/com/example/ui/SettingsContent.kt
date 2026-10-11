@@ -271,35 +271,29 @@ fun SettingsSheetContent(
                 if (idToken != null) {
                     viewModel.loginWithGoogle(idToken)
                 } else {
-                    viewModel.showToast(if (lang == AppLanguage.RU) "Google вход: Нет ID токена" else "Google login: No ID Token")
+                    viewModel.showToast(LanguageHelper.getString("googleNoIdToken", lang))
                 }
             } catch (e: Exception) {
                 val errMsg = e.localizedMessage ?: ""
                 if (errMsg.contains("10") || errMsg.contains("DEVELOPER_ERROR")) {
-                    viewModel.showToast(
-                        if (lang == AppLanguage.RU) 
-                            "Для Google входа нужен CLIENT_ID. Пожалуйста, используйте вход по Почте и Паролю."
-                        else 
-                            "Google Sign-In requires CLIENT_ID. Please use Email and Password login instead."
-                    )
+                    viewModel.showToast(LanguageHelper.getString("googleClientIdRequired", lang))
                 } else {
-                    viewModel.showToast(
-                        if (lang == AppLanguage.RU) "Ошибка Google входа: ${e.localizedMessage}" else "Google login failed: ${e.localizedMessage}"
-                    )
+                    val errorDetail = e.localizedMessage?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
+                    viewModel.showToast("${LanguageHelper.getString("googleLoginFailed", lang)}$errorDetail")
                 }
             }
         }
 
-        val accountTitle = if (lang == AppLanguage.RU) "Синхронизация и Облако" else "Cloud Sync & Account"
-        val emailLabel = if (lang == AppLanguage.RU) "Эл. почта" else "Email"
-        val passwordLabel = if (lang == AppLanguage.RU) "Пароль" else "Password"
-        val btnLoginText = if (lang == AppLanguage.RU) "Войти" else "Log In"
-        val btnRegisterText = if (lang == AppLanguage.RU) "Зарегистрироваться" else "Register"
-        val toggleRegisterText = if (lang == AppLanguage.RU) "Нет аккаунта? Зарегистрироваться" else "Don't have an account? Register"
-        val toggleLoginText = if (lang == AppLanguage.RU) "Уже есть аккаунт? Войти" else "Already have an account? Log In"
-        val signedInText = if (lang == AppLanguage.RU) "Вы вошли как:" else "Signed in as:"
-        val signOutText = if (lang == AppLanguage.RU) "Выйти" else "Sign Out"
-        val syncNowText = if (lang == AppLanguage.RU) "Синхронизировать" else "Sync Now"
+        val accountTitle = LanguageHelper.getString("accountTitle", lang)
+        val emailLabel = LanguageHelper.getString("emailLabel", lang)
+        val passwordLabel = LanguageHelper.getString("passwordLabel", lang)
+        val btnLoginText = LanguageHelper.getString("loginButton", lang)
+        val btnRegisterText = LanguageHelper.getString("registerButton", lang)
+        val toggleRegisterText = LanguageHelper.getString("toggleToRegister", lang)
+        val toggleLoginText = LanguageHelper.getString("toggleToLogin", lang)
+        val signedInText = LanguageHelper.getString("signedInAs", lang)
+        val signOutText = LanguageHelper.getString("signOutButton", lang)
+        val syncNowText = LanguageHelper.getString("syncNowButton", lang)
 
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -327,7 +321,7 @@ fun SettingsSheetContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Signed In Indicator",
+                        contentDescription = LanguageHelper.getString("signedInIndicatorDescription", lang),
                         tint = Color(0xFF00FFCC),
                         modifier = Modifier.size(18.dp)
                     )
@@ -450,7 +444,7 @@ fun SettingsSheetContent(
                     Button(
                         onClick = {
                             if (emailInput.isBlank() || passwordInput.isBlank()) {
-                                viewModel.showToast(if (lang == AppLanguage.RU) "Заполните все поля" else "Please fill all fields")
+                                viewModel.showToast(LanguageHelper.getString("fillAllFields", lang))
                                 return@Button
                             }
                             if (isRegisterMode) {
@@ -482,7 +476,7 @@ fun SettingsSheetContent(
                                 val signInIntent = googleSignInClient.signInIntent
                                 googleLauncher.launch(signInIntent)
                             } catch (e: Exception) {
-                                viewModel.showToast("Google Sign-In initialization failed: ${e.localizedMessage}")
+                                viewModel.showToast(LanguageHelper.getString("googleSignInInitFailed", lang) + (e.localizedMessage?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""))
                             }
                         },
                         modifier = Modifier.weight(1f).height(42.dp),
@@ -495,7 +489,7 @@ fun SettingsSheetContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CompareArrows,
-                                contentDescription = "Google Sign In",
+                                contentDescription = LanguageHelper.getString("googleSignInDescription", lang),
                                 tint = ElegantLavender,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -697,7 +691,7 @@ fun SettingsSheetContent(
                             if (isThemeSelected) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
+                                    contentDescription = LanguageHelper.getString("selectedDescription", lang),
                                     tint = ElegantDarkBg,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -731,7 +725,7 @@ fun SettingsSheetContent(
                             if (isThemeSelected) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
+                                    contentDescription = LanguageHelper.getString("selectedDescription", lang),
                                     tint = ElegantDarkBg,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -766,7 +760,7 @@ fun SettingsSheetContent(
                                 if (isThemeSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = LanguageHelper.getString("selectedDescription", lang),
                                         tint = ElegantDarkBg,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -800,7 +794,7 @@ fun SettingsSheetContent(
                                 if (isThemeSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
+                                        contentDescription = LanguageHelper.getString("selectedDescription", lang),
                                         tint = ElegantDarkBg,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -1292,11 +1286,10 @@ fun SettingsSheetContent(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         val emailDesc = if (currentUserEmail != null) " ($currentUserEmail)" else ""
+                        val accountClearDescription = LanguageHelper.getString("accountClearDescription", lang)
+                            .replace("{emailDesc}", emailDesc)
                         Text(
-                            text = if (lang == AppLanguage.RU)
-                                "Вы вошли в аккаунт$emailDesc. Ваша история синхронизирована с облаком. Выберите вариант очистки:"
-                            else
-                                "You are signed into your account$emailDesc. Your history is synced with the cloud. Choose how to clear:",
+                            text = accountClearDescription,
                             color = ElegantTextSecondary,
                             style = MaterialTheme.typography.bodyMedium
                         )

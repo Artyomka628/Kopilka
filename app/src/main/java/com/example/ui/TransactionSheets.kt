@@ -243,7 +243,7 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
+                    contentDescription = LanguageHelper.getString("confirm", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
@@ -259,7 +259,7 @@ fun SpendSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )
@@ -352,7 +352,7 @@ fun TopUpSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
+                    contentDescription = LanguageHelper.getString("confirm", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
@@ -368,7 +368,7 @@ fun TopUpSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )
@@ -442,7 +442,7 @@ fun SetGoalSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
+                    contentDescription = LanguageHelper.getString("confirm", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
@@ -458,7 +458,7 @@ fun SetGoalSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )
@@ -532,7 +532,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
+                    contentDescription = LanguageHelper.getString("confirm", lang),
                     tint = ColorTopUp,
                     modifier = Modifier.size(28.dp)
                 )
@@ -548,7 +548,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )

@@ -826,7 +826,7 @@ fun EditDebtSheetContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = LanguageHelper.getString("cancel", lang),
                     tint = ColorSpend,
                     modifier = Modifier.size(28.dp)
                 )

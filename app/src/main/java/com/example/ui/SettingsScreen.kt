@@ -62,7 +62,7 @@ fun SettingsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = LanguageHelper.getString("back", lang),
                             tint = ElegantTextPrimary,
                             modifier = Modifier.size(20.dp)
                         )

@@ -640,11 +640,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         if (diff != 0.0) {
             val lang = _selectedLanguage.value ?: AppLanguage.RU
             val changeStr = formatChange(diff)
-            val reasonStr = if (lang == AppLanguage.RU) {
-                "Перерасчёт средств ($changeStr)"
-            } else {
-                "Recalculation of funds ($changeStr)"
-            }
+            val reasonStr = LanguageHelper.getString("recalculationReason", lang)
+                .replace("{change}", changeStr)
             if (_transactions.value.isEmpty()) {
                 _balance.value = roundedAmount
                 saveToPrefs()
@@ -724,11 +721,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 syncData()
             }
         } else {
-            val reasonStr = if (lang == AppLanguage.RU) {
-                "Отмена операции ранее ($changeStr)"
-            } else {
-                "Cancellation of earlier operation ($changeStr)"
-            }
+            val reasonStr = LanguageHelper.getString("cancelEarlierOperationReason", lang)
+                .replace("{change}", changeStr)
             addTransaction(-targetTx.amount, reasonStr)
         }
     }
@@ -970,12 +964,13 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
         val dateStr = sdf.format(java.util.Date(currentTime))
         
-        val title = if (lang == AppLanguage.RU) "Статистика за $dateStr" else "Statistics for $dateStr"
-        val detail = if (lang == AppLanguage.RU) {
-            "Доход - ${formatValueDouble(income)}\nРасход - ${formatValueDouble(Math.abs(expense))}"
-        } else {
-            "Income - ${formatValueDouble(income)}\nExpense - ${formatValueDouble(Math.abs(expense))}"
-        }
+        val title = LanguageHelper.getString("statisticsTitleForDate", lang)
+            .replace("{date}", dateStr)
+        val incomeDetail = LanguageHelper.getString("statisticsIncomeDetail", lang)
+            .replace("{amount}", formatValueDouble(income))
+        val expenseDetail = LanguageHelper.getString("statisticsExpenseDetail", lang)
+            .replace("{amount}", formatValueDouble(Math.abs(expense)))
+        val detail = "$incomeDetail\n$expenseDetail"
         
         val reasonWithDetail = "$title|$detail"
         

@@ -247,19 +247,12 @@ fun HeaderRow(
     var showSyncDialog by remember { mutableStateOf(false) }
 
     if (showSyncDialog) {
-        val syncDialogTitle = if (lang == AppLanguage.RU) "Синхронизация" else "Synchronization"
-        val unsyncedMsg = if (lang == AppLanguage.RU) {
-            "Некоторые записи в истории не синхронизированы с облаком."
-        } else {
-            "Some entries in history are not synchronized with the cloud."
-        }
-        val unsyncedCountMsg = if (lang == AppLanguage.RU) {
-            "Количество несинхронизированных записей: ${unsyncedTxIds.size}"
-        } else {
-            "Number of unsynchronized entries: ${unsyncedTxIds.size}"
-        }
-        val syncBtnText = if (lang == AppLanguage.RU) "Синхронизировать" else "Synchronize"
-        val closeBtnText = if (lang == AppLanguage.RU) "Закрыть" else "Close"
+        val syncDialogTitle = LanguageHelper.getString("syncDialogTitle", lang)
+        val unsyncedMsg = LanguageHelper.getString("unsyncedEntriesMessage", lang)
+        val unsyncedCountMsg = LanguageHelper.getString("unsyncedEntriesCount", lang)
+            .replace("{count}", unsyncedTxIds.size.toString())
+        val syncBtnText = LanguageHelper.getString("syncDialogButton", lang)
+        val closeBtnText = LanguageHelper.getString("closeButton", lang)
 
         AlertDialog(
             onDismissRequest = { showSyncDialog = false },
@@ -446,7 +439,7 @@ fun HeaderRow(
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = LanguageHelper.getString("settingsIconDescription", lang),
                     tint = ElegantTextPrimary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -597,7 +590,7 @@ fun BalanceSummaryCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = LanguageHelper.getString("incomeSummaryLabel", lang).uppercase(),
+                        text = LanguageHelper.getString("balanceIncomeLabel", lang).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = ElegantTextTertiary,
                             fontSize = 11.sp,
