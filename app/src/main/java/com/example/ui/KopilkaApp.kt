@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.flow.collect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -107,30 +108,33 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
     val showOnboarding by viewModel.showOnboarding.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
 
-    // Synchronize pager page changes to viewModel.currentScreen when user swipes
-    LaunchedEffect(pagerState.currentPage) {
-        val targetScreen = when (pagerState.currentPage) {
-            0 -> AppScreen.DEBTS
-            1 -> AppScreen.MAIN
-            2 -> AppScreen.SETTINGS
-            else -> AppScreen.MAIN
-        }
-        if (viewModel.currentScreen.value != targetScreen) {
-            viewModel.navigateTo(targetScreen)
+    // Update the selected screen only after the user's swipe has settled.
+    // Observing settledPage through snapshotFlow avoids recomposing the root during pager movement.
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            val targetScreen = when (page) {
+                0 -> AppScreen.DEBTS
+                1 -> AppScreen.MAIN
+                2 -> AppScreen.SETTINGS
+                else -> AppScreen.MAIN
+            }
+            if (viewModel.currentScreen.value != targetScreen) {
+                viewModel.navigateTo(targetScreen)
+            }
         }
     }
 
-    // Synchronize viewModel.currentScreen changes (e.g. from buttons or back press) to animated pager scroll
+    // Navigate only when the pager is not already moving toward the requested page.
     LaunchedEffect(currentScreen) {
         val targetPage = when (currentScreen) {
             AppScreen.SETTINGS -> 2
             AppScreen.MAIN -> 1
             AppScreen.DEBTS -> 0
         }
-        if (pagerState.currentPage != targetPage) {
+        if (pagerState.targetPage != targetPage) {
             pagerState.animateScrollToPage(
                 page = targetPage,
-                animationSpec = tween(durationMillis = 350)
+                animationSpec = tween(durationMillis = 260)
             )
         }
     }
