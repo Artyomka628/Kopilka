@@ -77,7 +77,6 @@ fun OnboardingDialog(
     val hasContinueAction = step == 0 || finalStep
     val density = LocalDensity.current
     val edgeMarginPx = with(density) { 16.dp.roundToPx() }
-    val horizontalDragLimitPx = with(density) { 16.dp.roundToPx() }
 
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     var cardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -114,12 +113,12 @@ fun OnboardingDialog(
         modifier = Modifier
             .fillMaxSize()
             .onSizeChanged { containerSize = it }
-            .onGloballyPositioned { overlayOriginY = it.positionInRoot().y }
+            .onGloballyPositioned { overlayOriginY = it.positionInRoot().y },
+        contentAlignment = Alignment.TopCenter
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .fillMaxWidth(0.88f)
                 .offset {
                     IntOffset(
                         x = animatedOffset.x + dragOffset.x,
@@ -136,11 +135,11 @@ fun OnboardingDialog(
                         val maxY = (
                             latestContainerSize.height - latestCardSize.height - base.y
                         ).coerceAtLeast(minY)
+                        val maxX = (
+                            (latestContainerSize.width - latestCardSize.width) / 2
+                        ).coerceAtLeast(0)
                         dragOffset = IntOffset(
-                            x = (current.x + dragAmount.x.roundToInt()).coerceIn(
-                                -horizontalDragLimitPx,
-                                horizontalDragLimitPx
-                            ),
+                            x = (current.x + dragAmount.x.roundToInt()).coerceIn(-maxX, maxX),
                             y = (current.y + dragAmount.y.roundToInt()).coerceIn(minY, maxY)
                         )
                     }
