@@ -42,6 +42,9 @@ import java.util.*
 
 @Composable
 fun LanguageSheetContent(viewModel: KopilkaViewModel) {
+    val selectedLanguage by viewModel.selectedLanguage.collectAsStateWithLifecycle()
+    val lang = selectedLanguage ?: AppLanguage.RU
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
