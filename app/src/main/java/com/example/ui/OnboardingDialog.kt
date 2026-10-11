@@ -57,7 +57,7 @@ fun OnboardingDialog(
     val strings = { key: String -> LanguageHelper.getString(key, lang) }
     val finalStep = step >= 6
     val hasContinueAction = step == 0 || step == 5 || finalStep
-    val alignment = if (step <= 2) Alignment.TopCenter else Alignment.BottomCenter
+    val alignment = if (step <= 2 || step >= 5) Alignment.TopCenter else Alignment.BottomCenter
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -68,7 +68,7 @@ fun OnboardingDialog(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .then(
-                    if (step <= 2) Modifier.padding(top = 116.dp)
+                    if (step <= 2 || step >= 5) Modifier.padding(top = 116.dp)
                     else Modifier.padding(bottom = 16.dp)
                 ),
             shape = RoundedCornerShape(22.dp),

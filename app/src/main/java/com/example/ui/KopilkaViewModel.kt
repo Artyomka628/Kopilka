@@ -232,7 +232,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             syncData()
         }
         updateLauncherIconSettings()
-        if (prefs.getBoolean("onboarding_completed_v3", false)) {
+        if (prefs.getBoolean("interactive_onboarding_completed_v1", false)) {
             checkTestBuildWarning()
         } else if (_selectedLanguage.value != null) {
             startInteractiveOnboarding()
@@ -258,7 +258,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         loadFromPrefs()
-        prefs.edit().putBoolean("onboarding_completed_v3", true).commit()
+        prefs.edit().putBoolean("interactive_onboarding_completed_v1", true).commit()
         _currentSheet.value = null
         _currentScreen.value = AppScreen.MAIN
         _onboardingInteractionOpen.value = false
@@ -269,7 +269,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private fun startInteractiveOnboarding() {
         if (_selectedLanguage.value == null ||
-            prefs.getBoolean("onboarding_completed_v3", false) ||
+            prefs.getBoolean("interactive_onboarding_completed_v1", false) ||
             _showOnboarding.value
         ) return
 
@@ -456,7 +456,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         val languageWasUnset = _selectedLanguage.value == null
         _selectedLanguage.value = lang
         saveToPrefs()
-        if (languageWasUnset && !prefs.getBoolean("onboarding_completed_v3", false)) {
+        if (languageWasUnset && !prefs.getBoolean("interactive_onboarding_completed_v1", false)) {
             startInteractiveOnboarding()
         }
     }
@@ -605,6 +605,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun showSheet(type: SheetType) {
+        if (_showOnboarding.value) {
+            val allowed = when (_onboardingStep.value) {
+                1 -> type == SheetType.TOP_UP
+                2 -> type == SheetType.SPEND
+                5 -> type in setOf(
+                    SheetType.SET_GOAL,
+                    SheetType.COUNT_MONEY,
+                    SheetType.ABOUT_APP,
+                    SheetType.LANGUAGE
+                )
+                else -> false
+            }
+            if (!allowed) return
+        }
         _currentSheet.value = type
     }
 
@@ -775,6 +789,14 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun navigateTo(screen: AppScreen) {
+        if (_showOnboarding.value) {
+            val guidedScreen = when (_onboardingStep.value) {
+                0, 1, 2 -> AppScreen.MAIN
+                3, 4 -> AppScreen.DEBTS
+                else -> AppScreen.SETTINGS
+            }
+            if (screen != guidedScreen) return
+        }
         _currentScreen.value = screen
     }
 
