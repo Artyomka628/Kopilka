@@ -590,7 +590,7 @@ fun BalanceSummaryCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = LanguageHelper.getString("balanceIncomeLabel", lang).uppercase(),
+                        text = LanguageHelper.getString("balanceIncomeLabel", lang),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = ElegantTextTertiary,
                             fontSize = 11.sp,
