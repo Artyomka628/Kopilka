@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.collect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.theme.*
 import java.util.*
+import kotlin.math.abs
 
 @Composable
 fun rememberPrimaryColor(viewModel: KopilkaViewModel): Color {
@@ -108,6 +110,15 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
     val showOnboarding by viewModel.showOnboarding.collectAsStateWithLifecycle()
     val onboardingStep by viewModel.onboardingStep.collectAsStateWithLifecycle()
     val onboardingInteractionOpen by viewModel.onboardingInteractionOpen.collectAsStateWithLifecycle()
+    var onboardingTarget by remember { mutableStateOf<Pair<Int, Float>?>(null) }
+    val reportOnboardingTarget: (Int, Float) -> Unit = { targetStep, targetCenterY ->
+        if (targetStep == onboardingStep) {
+            val previous = onboardingTarget
+            if (previous?.first != targetStep || previous.second.let { abs(it - targetCenterY) > 2f }) {
+                onboardingTarget = targetStep to targetCenterY
+            }
+        }
+    }
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
 
     // Update the selected screen only after the user's swipe has settled.
@@ -159,13 +170,17 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     0 -> {
                         DebtsScreen(
                             viewModel = viewModel,
-                            lang = lang
+                            lang = lang,
+                            tutorialStep = onboardingStep,
+                            onTutorialTarget = reportOnboardingTarget
                         )
                     }
                     1 -> {
                         MainScreen(
                             viewModel = viewModel,
-                            lang = lang
+                            lang = lang,
+                            tutorialStep = onboardingStep,
+                            onTutorialTarget = reportOnboardingTarget
                         )
                     }
                     2 -> {
@@ -218,8 +233,9 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     onContinue = { viewModel.continueInteractiveOnboarding() },
                     onSkip = { viewModel.finishInteractiveOnboarding() },
                     onFinish = { viewModel.finishInteractiveOnboarding() },
-                    onOpenDebts = { viewModel.navigateTo(AppScreen.DEBTS) },
-                    onOpenSettings = { viewModel.navigateTo(AppScreen.SETTINGS) }
+                    targetCenterYInRoot = onboardingTarget
+                        ?.takeIf { it.first == onboardingStep }
+                        ?.second
                 )
             }
 
