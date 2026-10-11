@@ -163,7 +163,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = !showOnboarding || onboardingStep == 3 || onboardingStep == 6
+                userScrollEnabled = !showOnboarding || onboardingStep in setOf(3, 6, 7, 8)
             ) { page ->
                 when (page) {
                     0 -> {
@@ -191,7 +191,9 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                             onLoadClick = {
                                 importLauncher.launch(arrayOf("application/json"))
                             },
-                            lang = lang
+                            lang = lang,
+                            tutorialStep = onboardingStep,
+                            onTutorialTarget = reportOnboardingTarget
                         )
                     }
                 }
