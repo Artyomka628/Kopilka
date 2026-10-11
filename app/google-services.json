@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1045595440156",
+    "project_id": "drygvalartyom-kopilka",
+    "storage_bucket": "drygvalartyom-kopilka.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045595440156:android:d353e12df53bb42e70cbd9",
+        "android_client_info": {
+          "package_name": "com.drygvalartyom.kopilka"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1045595440156-0v1tl3hflb5v89p3p41pilh3ln3pcbil.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.drygvalartyom.kopilka",
+            "certificate_hash": "d4fe17a011e197058678d6fc65da28d66732cade"
+          }
+        },
+        {
+          "client_id": "1045595440156-ujf4j2u425damv6buk2qo5bqikmkpm3s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7XKWXxmgbuJxZgszU4rVF7zXKqbYJGnE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1045595440156-3i27v0ogt2aib2u42edgavr5lvk9np08.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
