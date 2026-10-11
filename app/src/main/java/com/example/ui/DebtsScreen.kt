@@ -24,6 +24,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +43,12 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
+fun DebtsScreen(
+    viewModel: KopilkaViewModel,
+    lang: AppLanguage,
+    tutorialStep: Int = 0,
+    onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
+) {
     BackHandler {
         viewModel.navigateTo(AppScreen.MAIN)
     }
@@ -73,8 +80,9 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = LanguageHelper.getString("debtsTitle", lang),
@@ -88,9 +96,15 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     IconButton(
                         onClick = { viewModel.navigateTo(AppScreen.MAIN) },
                         modifier = Modifier
+                            .padding(start = 16.dp)
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(ElegantCardBg)
+                            .background(Color(0xFF35343A))
+                            .onGloballyPositioned {
+                                if (tutorialStep == 6) {
+                                    onTutorialTarget(6, it.boundsInRoot().center.y)
+                                }
+                            }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -100,10 +114,11 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = ElegantDarkBg,
                     titleContentColor = ElegantTextPrimary
-                )
+                ),
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         containerColor = ElegantDarkBg
@@ -204,10 +219,16 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     onClick = {
                         addDebtType = DebtType.OWED_TO_ME
                         showAddSheet = true
+                        viewModel.setOnboardingInteractionOpen(true)
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .height(52.dp)
+                        .onGloballyPositioned {
+                            if (tutorialStep == 4) {
+                                onTutorialTarget(4, it.boundsInRoot().center.y)
+                            }
+                        },
                     colors = ButtonDefaults.buttonColors(containerColor = ColorTopUp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -235,10 +256,16 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     onClick = {
                         addDebtType = DebtType.I_OWE
                         showAddSheet = true
+                        viewModel.setOnboardingInteractionOpen(true)
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .height(52.dp)
+                        .onGloballyPositioned {
+                            if (tutorialStep == 5) {
+                                onTutorialTarget(5, it.boundsInRoot().center.y)
+                            }
+                        },
                     colors = ButtonDefaults.buttonColors(containerColor = ColorSpend),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -352,7 +379,10 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
     // Modal Bottom Sheet: Add Debt
     if (showAddSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false },
+            onDismissRequest = {
+                showAddSheet = false
+                viewModel.setOnboardingInteractionOpen(false)
+            },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             containerColor = ElegantCardBg,
             contentColor = ElegantTextPrimary,
@@ -365,7 +395,10 @@ fun DebtsScreen(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     viewModel.addDebt(name, amount, addDebtType)
                     showAddSheet = false
                 },
-                onCancel = { showAddSheet = false }
+                onCancel = {
+                    showAddSheet = false
+                    viewModel.setOnboardingInteractionOpen(false)
+                }
             )
         }
     }

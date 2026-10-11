@@ -200,8 +200,31 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val _showTestBuildDialog = MutableStateFlow(false)
     val showTestBuildDialog: StateFlow<Boolean> = _showTestBuildDialog.asStateFlow()
 
+    private val _showOnboarding = MutableStateFlow(false)
+    val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
+
+    private val _onboardingStep = MutableStateFlow(0)
+    val onboardingStep: StateFlow<Int> = _onboardingStep.asStateFlow()
+
+    private val _onboardingInteractionOpen = MutableStateFlow(false)
+    val onboardingInteractionOpen: StateFlow<Boolean> = _onboardingInteractionOpen.asStateFlow()
+
+    private val onboardingBackupKey = "interactive_onboarding_backup"
+    private val onboardingSnapshotKeys = listOf(
+        "balance", "goal", "transactions_json", "debts_json",
+        "unsynced_tx_ids", "deleted_tx_ids",
+        "custom_currency_enabled", "custom_currency_symbol", "goal_progress_hidden",
+        "stats_reset_frequency", "last_reset_timestamp", "selected_language",
+        "current_theme", "custom_theme_color", "launcher_icon_option"
+    )
+    private val onboardingBooleanKeys = setOf("custom_currency_enabled", "goal_progress_hidden")
+    private val onboardingFloatKeys = setOf("balance", "goal")
+    private val onboardingLongKeys = setOf("last_reset_timestamp", "custom_theme_color")
+    private val onboardingSetKeys = setOf("unsynced_tx_ids", "deleted_tx_ids")
+
     init {
         FirebaseManager.initialize(application)
+        restoreTutorialBackupIfNeeded()
         loadFromPrefs()
         _currentUserEmail.value = FirebaseManager.getCurrentUserEmail()
         checkAndPerformAutomaticReset()
@@ -209,7 +232,114 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             syncData()
         }
         updateLauncherIconSettings()
+        if (prefs.getBoolean("interactive_onboarding_completed_v1", false)) {
+            checkTestBuildWarning()
+        } else if (_selectedLanguage.value != null) {
+            startInteractiveOnboarding()
+        }
+    }
+
+    fun continueInteractiveOnboarding() {
+        if (_onboardingStep.value == 0) {
+            _onboardingStep.value = 1
+        }
+    }
+
+    fun setOnboardingInteractionOpen(open: Boolean) {
+        if (_showOnboarding.value) {
+            _onboardingInteractionOpen.value = open
+        }
+    }
+
+    fun finishInteractiveOnboarding() {
+        if (!restoreTutorialBackupIfNeeded()) {
+            showToast(LanguageHelper.getString("onboardingRestoreFailed", _selectedLanguage.value ?: AppLanguage.RU))
+            return
+        }
+        loadFromPrefs()
+        prefs.edit().putBoolean("interactive_onboarding_completed_v1", true).commit()
+        _currentSheet.value = null
+        _currentScreen.value = AppScreen.MAIN
+        _onboardingInteractionOpen.value = false
+        _onboardingStep.value = 0
+        _showOnboarding.value = false
         checkTestBuildWarning()
+    }
+
+    private fun startInteractiveOnboarding() {
+        if (_selectedLanguage.value == null ||
+            prefs.getBoolean("interactive_onboarding_completed_v1", false) ||
+            _showOnboarding.value
+        ) return
+
+        if (!saveTutorialBackup()) {
+            showToast(LanguageHelper.getString("onboardingBackupFailed", _selectedLanguage.value ?: AppLanguage.RU))
+            return
+        }
+
+        _currentSheet.value = null
+        _currentScreen.value = AppScreen.MAIN
+        _onboardingInteractionOpen.value = false
+        _onboardingStep.value = 0
+        _showOnboarding.value = true
+    }
+
+    private fun saveTutorialBackup(): Boolean {
+        return try {
+            val snapshot = org.json.JSONObject()
+            val allPrefs = prefs.all
+            onboardingSnapshotKeys.forEach { key ->
+                if (!allPrefs.containsKey(key)) {
+                    snapshot.put(key, org.json.JSONObject.NULL)
+                } else {
+                    val value = allPrefs[key]
+                    if (value is Set<*>) {
+                        val array = org.json.JSONArray()
+                        value.filterIsInstance<String>().forEach(array::put)
+                        snapshot.put(key, array)
+                    } else {
+                        snapshot.put(key, value)
+                    }
+                }
+            }
+            prefs.edit().putString(onboardingBackupKey, snapshot.toString()).commit()
+        } catch (e: Exception) {
+            Log.e("KopilkaViewModel", "Failed to back up data before onboarding", e)
+            false
+        }
+    }
+
+    private fun restoreTutorialBackupIfNeeded(): Boolean {
+        val raw = prefs.getString(onboardingBackupKey, null) ?: return false
+        return try {
+            val snapshot = org.json.JSONObject(raw)
+            val editor = prefs.edit()
+
+            onboardingSnapshotKeys.forEach { key ->
+                if (!snapshot.has(key) || snapshot.isNull(key)) {
+                    editor.remove(key)
+                } else {
+                    when {
+                        key in onboardingBooleanKeys -> editor.putBoolean(key, snapshot.getBoolean(key))
+                        key in onboardingFloatKeys -> editor.putFloat(key, snapshot.getDouble(key).toFloat())
+                        key in onboardingLongKeys -> editor.putLong(key, snapshot.getLong(key))
+                        key in onboardingSetKeys -> {
+                            val array = snapshot.getJSONArray(key)
+                            val values = buildSet {
+                                for (index in 0 until array.length()) add(array.getString(index))
+                            }
+                            editor.putStringSet(key, values)
+                        }
+                        else -> editor.putString(key, snapshot.getString(key))
+                    }
+                }
+            }
+
+            editor.remove(onboardingBackupKey).commit()
+        } catch (e: Exception) {
+            Log.e("KopilkaViewModel", "Failed to restore data after onboarding", e)
+            false
+        }
     }
 
     private fun checkTestBuildWarning() {
@@ -253,6 +383,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _transactions.value = emptyList()
             }
+        } else {
+            _transactions.value = emptyList()
         }
 
         val debtsJson = prefs.getString("debts_json", null)
@@ -262,6 +394,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _debts.value = emptyList()
             }
+        } else {
+            _debts.value = emptyList()
         }
 
         val unsyncedSet = prefs.getStringSet("unsynced_tx_ids", emptySet()) ?: emptySet()
@@ -318,8 +452,12 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setLanguage(lang: AppLanguage) {
+        val languageWasUnset = _selectedLanguage.value == null
         _selectedLanguage.value = lang
         saveToPrefs()
+        if (languageWasUnset && !prefs.getBoolean("interactive_onboarding_completed_v1", false)) {
+            startInteractiveOnboarding()
+        }
     }
 
     fun setTheme(theme: AppTheme) {
@@ -466,6 +604,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun showSheet(type: SheetType) {
+        if (_showOnboarding.value) {
+            val allowed = when (_onboardingStep.value) {
+                1 -> type == SheetType.TOP_UP
+                2 -> type == SheetType.SPEND
+                7 -> type in setOf(
+                    SheetType.SET_GOAL,
+                    SheetType.COUNT_MONEY,
+                    SheetType.ABOUT_APP,
+                    SheetType.LANGUAGE
+                )
+                else -> false
+            }
+            if (!allowed) return
+        }
         _currentSheet.value = type
     }
 
@@ -609,6 +761,19 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         _balance.value = Math.round((_balance.value + roundedAmount) * 100.0) / 100.0
         _unsyncedTxIds.value = _unsyncedTxIds.value + newTx.id
         saveToPrefs()
+
+        if (_showOnboarding.value) {
+            when {
+                _onboardingStep.value == 1 && roundedAmount > 0.0 -> {
+                    _onboardingStep.value = 2
+                }
+                _onboardingStep.value == 2 && roundedAmount < 0.0 -> {
+                    // Let the user choose how to reach Debts instead of navigating automatically.
+                    _onboardingStep.value = 3
+                }
+            }
+        }
+
         if (FirebaseManager.isUserSignedIn()) {
             syncData()
         }
@@ -623,6 +788,45 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun navigateTo(screen: AppScreen) {
+        if (_showOnboarding.value) {
+            when (_onboardingStep.value) {
+                0, 1, 2 -> if (screen != AppScreen.MAIN) return
+                3 -> {
+                    if (screen == AppScreen.DEBTS) {
+                        _onboardingStep.value = 4
+                    } else if (screen != AppScreen.MAIN) {
+                        return
+                    }
+                }
+                4, 5 -> if (screen != AppScreen.DEBTS) return
+                6 -> {
+                    // The user must leave Debts themselves before the Settings lesson begins.
+                    if (screen == AppScreen.MAIN) {
+                        _onboardingStep.value = 7
+                    } else if (screen != AppScreen.DEBTS) {
+                        return
+                    }
+                }
+                7 -> {
+                    // Open Settings through its real button or a swipe.
+                    if (screen == AppScreen.SETTINGS) {
+                        _onboardingStep.value = 8
+                    } else if (screen != AppScreen.MAIN) {
+                        return
+                    }
+                }
+                8 -> {
+                    // Finish the tour only after the user returns from Settings.
+                    if (screen == AppScreen.MAIN) {
+                        _onboardingStep.value = 9
+                    } else if (screen != AppScreen.SETTINGS) {
+                        return
+                    }
+                }
+                9 -> if (screen != AppScreen.MAIN) return
+                else -> if (screen != AppScreen.MAIN) return
+            }
+        }
         _currentScreen.value = screen
     }
 
@@ -640,6 +844,19 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         )
         _debts.value = listOf(newDebt) + _debts.value
         saveToPrefs()
+
+        if (_showOnboarding.value) {
+            when {
+                _onboardingStep.value == 4 && type == DebtType.OWED_TO_ME -> {
+                    _onboardingStep.value = 5
+                }
+                _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
+                    // Keep the user on Debts and explain how to return to the main screen.
+                    _onboardingStep.value = 6
+                }
+            }
+            _onboardingInteractionOpen.value = false
+        }
     }
 
     fun updateDebtAmount(debtId: String, newAmount: Double) {
@@ -876,6 +1093,11 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private var syncTimeoutJob: kotlinx.coroutines.Job? = null
 
     fun syncData(showExplicitToast: Boolean = false) {
+        if (_showOnboarding.value) {
+            _isSyncing.value = false
+            return
+        }
+
         if (com.example.BuildConfig.DEBUG) {
             _isSyncing.value = false
             if (showExplicitToast) {
@@ -1067,7 +1289,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                     val latestVersion = connection.inputStream.bufferedReader().use { it.readText() }.trim()
                     val currentVersion = com.example.BuildConfig.VERSION_NAME
                     
-                    if (latestVersion.isNotEmpty() && latestVersion != currentVersion) {
+                    if (latestVersion.isNotEmpty() && isNewerVersion(latestVersion, currentVersion)) {
                         withContext(Dispatchers.Main) {
                             _updateState.value = UpdateState.UpdateAvailable(
                                 latestVersion = latestVersion,
@@ -1093,6 +1315,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+}
+
+private fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean {
+    val latestParts = latestVersion.trim().split('.').map { it.toIntOrNull() ?: return false }
+    val currentParts = currentVersion.trim().split('.').map { it.toIntOrNull() ?: return false }
+    val partCount = maxOf(latestParts.size, currentParts.size)
+
+    for (index in 0 until partCount) {
+        val latestPart = latestParts.getOrElse(index) { 0 }
+        val currentPart = currentParts.getOrElse(index) { 0 }
+        if (latestPart > currentPart) return true
+        if (latestPart < currentPart) return false
+    }
+    return false
 }
 
 sealed class UpdateState {
