@@ -8,7 +8,14 @@ data class Transaction(
     val timestamp: Long,
     val reason: String,
     val amount: Double,
-    val category: String? = null
+    val category: String? = null,
+    val kind: String? = null,
+    val debtId: String? = null,
+    val debtAction: String? = null,
+    val debtName: String? = null,
+    val debtType: DebtType? = null,
+    val debtAmountBefore: Double? = null,
+    val debtTimestamp: Long? = null
 )
 
 @JsonClass(generateAdapter = true)

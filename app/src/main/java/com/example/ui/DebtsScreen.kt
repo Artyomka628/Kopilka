@@ -420,7 +420,7 @@ fun DebtsScreen(
                     editingDebt = null
                 },
                 onFullyReturned = {
-                    viewModel.deleteDebt(debt.id)
+                    viewModel.repayDebtFully(debt.id)
                     editingDebt = null
                 },
                 onCancel = { editingDebt = null }

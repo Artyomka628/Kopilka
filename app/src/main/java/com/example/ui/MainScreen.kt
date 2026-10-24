@@ -69,10 +69,10 @@ fun MainScreen(
     }
 
     val totalIn = remember(activeTransactions) {
-        activeTransactions.filter { it.amount > 0 }.sumOf { it.amount }
+        activeTransactions.filter { it.amount > 0 && it.kind != "debt" }.sumOf { it.amount }
     }
     val totalOut = remember(activeTransactions) {
-        activeTransactions.filter { it.amount < 0 }.sumOf { it.amount }
+        activeTransactions.filter { it.amount < 0 && it.kind != "debt" }.sumOf { it.amount }
     }
 
     val formattedBalance = formatDouble(balance)
@@ -729,8 +729,9 @@ fun TransactionItemRow(
     val isStatsReset = tx.reason.startsWith("Статистика за") || tx.reason.startsWith("Statistics for")
     val isCancel = tx.reason.contains("Отмена") || tx.reason.contains("Cancellation")
     val isRecalc = tx.reason.contains("Перерасчёт") || tx.reason.contains("Recalculation")
+    val isDebtOperation = tx.kind == "debt"
 
-    val expenseCategory = if (!isIncome && !isStatsReset && !isCancel && !isRecalc) {
+    val expenseCategory = if (!isIncome && !isStatsReset && !isCancel && !isRecalc && !isDebtOperation) {
         ExpenseCategory.fromId(tx.category)
     } else null
 
@@ -756,6 +757,7 @@ fun TransactionItemRow(
     }
 
     val iconBgColor = when {
+        isDebtOperation -> Color(0xFFD1C4E9)
         isStatsReset -> Color(0xFFC5CAE9)
         isCancel -> Color(0xFFD0BCFF)
         isRecalc -> Color(0xFFEADDFF)
@@ -764,6 +766,7 @@ fun TransactionItemRow(
     }
 
     val iconColor = when {
+        isDebtOperation -> Color(0xFF4527A0)
         isStatsReset -> Color(0xFF1A237E)
         isCancel -> Color(0xFF381E72)
         isRecalc -> Color(0xFF21005D)
@@ -772,6 +775,7 @@ fun TransactionItemRow(
     }
 
     val iconVector = when {
+        isDebtOperation -> Icons.Default.AccountBalanceWallet
         isStatsReset -> Icons.Default.Article
         isCancel -> Icons.AutoMirrored.Filled.Undo
         isRecalc -> Icons.Default.CompareArrows

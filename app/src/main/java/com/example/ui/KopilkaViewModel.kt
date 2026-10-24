@@ -226,6 +226,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         FirebaseManager.initialize(application)
         restoreTutorialBackupIfNeeded()
         loadFromPrefs()
+        migrateExistingDebtsToTransactions()
         _currentUserEmail.value = FirebaseManager.getCurrentUserEmail()
         checkAndPerformAutomaticReset()
         if (FirebaseManager.isUserSignedIn() && !com.example.BuildConfig.DEBUG) {
@@ -422,8 +423,42 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun saveToPrefs() {
+    private fun migrateExistingDebtsToTransactions() {
+        if (prefs.getBoolean("debts_accounting_migrated_v1", false)) return
+
+        val lang = _selectedLanguage.value ?: AppLanguage.RU
+        val now = System.currentTimeMillis()
+        val migrationTransactions = _debts.value.map { debt ->
+            val balanceChange = if (debt.type == DebtType.OWED_TO_ME) -debt.amount else debt.amount
+            Transaction(
+                id = UUID.randomUUID().toString(),
+                timestamp = now,
+                reason = LanguageHelper.getString("debtExistingBalanceReason", lang).replace("{name}", debt.name),
+                amount = balanceChange,
+                kind = "debt",
+                debtId = debt.id,
+                debtAction = "opened",
+                debtName = debt.name,
+                debtType = debt.type,
+                debtTimestamp = debt.timestamp
+            )
+        }
+
+        if (migrationTransactions.isNotEmpty()) {
+            _transactions.value = migrationTransactions + _transactions.value
+            _balance.value = Math.round(
+                (_balance.value + migrationTransactions.sumOf { it.amount }) * 100.0
+            ) / 100.0
+            _unsyncedTxIds.value = _unsyncedTxIds.value + migrationTransactions.map { it.id }
+        }
+        saveToPrefs(debtsMigrationComplete = true)
+    }
+
+    private fun saveToPrefs(debtsMigrationComplete: Boolean? = null) {
         prefs.edit().apply {
+            if (debtsMigrationComplete != null) {
+                putBoolean("debts_accounting_migrated_v1", debtsMigrationComplete)
+            }
             putFloat("balance", _balance.value.toFloat())
             putFloat("goal", _goal.value.toFloat())
             putBoolean("custom_currency_enabled", _customCurrencyEnabled.value)
@@ -701,12 +736,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     fun cancelTransaction(txId: String) {
         val currentList = _transactions.value
-        val targetTx = currentList.find { it.id == txId } ?: return
+        val targetIndex = currentList.indexOfFirst { it.id == txId }
+        if (targetIndex < 0) return
+        val targetTx = currentList[targetIndex]
+        val hasNewerDebtOperation = targetTx.debtId?.let { debtId ->
+            currentList.take(targetIndex).any { it.debtId == debtId && it.debtAction != null }
+        } ?: false
+        if (hasNewerDebtOperation) {
+            showToast(LanguageHelper.getString("cancelNewerDebtOperationsFirst", _selectedLanguage.value ?: AppLanguage.RU))
+            return
+        }
         val isLast = currentList.firstOrNull()?.id == txId
 
-        // Remove from journal
-        val updatedList = currentList.filter { it.id != txId }
-        _transactions.value = updatedList
+        _transactions.value = currentList.filter { it.id != txId }
+        undoDebtTransaction(targetTx)
 
         _deletedTxIds.value = _deletedTxIds.value + txId
         _unsyncedTxIds.value = _unsyncedTxIds.value + txId
@@ -727,6 +770,33 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    private fun undoDebtTransaction(transaction: Transaction) {
+        val debtId = transaction.debtId ?: return
+        when (transaction.debtAction) {
+            "opened" -> {
+                _debts.value = _debts.value.filterNot { it.id == debtId }
+            }
+            "partial_repayment", "full_repayment" -> {
+                val previousAmount = transaction.debtAmountBefore ?: return
+                val name = transaction.debtName ?: return
+                val type = transaction.debtType ?: return
+                val timestamp = transaction.debtTimestamp ?: transaction.timestamp
+                val restoredDebt = Debt(
+                    id = debtId,
+                    name = name,
+                    amount = previousAmount,
+                    type = type,
+                    timestamp = timestamp
+                )
+                _debts.value = if (_debts.value.any { it.id == debtId }) {
+                    _debts.value.map { if (it.id == debtId) restoredDebt else it }
+                } else {
+                    listOf(restoredDebt) + _debts.value
+                }
+            }
+        }
+    }
+
     private fun formatChange(amount: Double): String {
         val rounded = Math.round(amount * 100.0) / 100.0
         val sign = if (rounded > 0) "+" else ""
@@ -739,7 +809,18 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         return "$sign$value"
     }
 
-    fun addTransaction(amount: Double, reason: String, category: String? = null) {
+    fun addTransaction(
+        amount: Double,
+        reason: String,
+        category: String? = null,
+        kind: String? = null,
+        debtId: String? = null,
+        debtAction: String? = null,
+        debtName: String? = null,
+        debtType: DebtType? = null,
+        debtAmountBefore: Double? = null,
+        debtTimestamp: Long? = null
+    ) {
         val roundedAmount = Math.round(amount * 100.0) / 100.0
         val newTx = Transaction(
             id = UUID.randomUUID().toString(),
@@ -748,7 +829,14 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 if (_selectedLanguage.value == AppLanguage.RU) "Без описания" else "No description"
             },
             amount = roundedAmount,
-            category = category
+            category = category,
+            kind = kind,
+            debtId = debtId,
+            debtAction = debtAction,
+            debtName = debtName,
+            debtType = debtType,
+            debtAmountBefore = debtAmountBefore,
+            debtTimestamp = debtTimestamp
         )
         val updatedList = listOf(newTx) + _transactions.value // Prepend to list to display newest first
         _transactions.value = updatedList
@@ -826,6 +914,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     fun addDebt(name: String, amount: Double, type: DebtType) {
         val roundedAmount = Math.round(amount * 100.0) / 100.0
+        if (roundedAmount <= 0.0 || !roundedAmount.isFinite()) return
+
         val trimmedName = name.trim().ifEmpty {
             if (_selectedLanguage.value == AppLanguage.RU) "Без имени" else "Unnamed"
         }
@@ -837,7 +927,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             timestamp = System.currentTimeMillis()
         )
         _debts.value = listOf(newDebt) + _debts.value
-        saveToPrefs()
+
+        val lang = _selectedLanguage.value ?: AppLanguage.RU
+        val reasonKey = if (type == DebtType.OWED_TO_ME) "debtLentReason" else "debtBorrowedReason"
+        val balanceChange = if (type == DebtType.OWED_TO_ME) -roundedAmount else roundedAmount
+        addTransaction(
+            amount = balanceChange,
+            reason = LanguageHelper.getString(reasonKey, lang).replace("{name}", trimmedName),
+            kind = "debt",
+            debtId = newDebt.id,
+            debtAction = "opened",
+            debtName = newDebt.name,
+            debtType = newDebt.type,
+            debtTimestamp = newDebt.timestamp
+        )
 
         if (_showOnboarding.value) {
             when {
@@ -845,7 +948,6 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                     _onboardingStep.value = 5
                 }
                 _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
-                    // Keep the user on Debts and explain how to return to the main screen.
                     _onboardingStep.value = 6
                 }
             }
@@ -854,19 +956,67 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun updateDebtAmount(debtId: String, newAmount: Double) {
+        val debt = _debts.value.find { it.id == debtId } ?: return
         val roundedAmount = Math.round(newAmount * 100.0) / 100.0
-        if (roundedAmount <= 0.0) {
-            deleteDebt(debtId)
-        } else {
-            _debts.value = _debts.value.map { debt ->
-                if (debt.id == debtId) debt.copy(amount = roundedAmount) else debt
-            }
-            saveToPrefs()
+        if (roundedAmount < 0.0 || !roundedAmount.isFinite()) return
+
+        if (roundedAmount == 0.0) {
+            repayDebtFully(debtId)
+            return
         }
+        if (roundedAmount >= debt.amount) {
+            if (roundedAmount != debt.amount) {
+                _debts.value = _debts.value.map {
+                    if (it.id == debtId) it.copy(amount = roundedAmount) else it
+                }
+                saveToPrefs()
+            }
+            return
+        }
+
+        val repaidAmount = Math.round((debt.amount - roundedAmount) * 100.0) / 100.0
+        _debts.value = _debts.value.map {
+            if (it.id == debtId) it.copy(amount = roundedAmount) else it
+        }
+        recordDebtRepayment(debt, repaidAmount, fullyRepaid = false)
+    }
+
+    fun repayDebtFully(debtId: String) {
+        val debt = _debts.value.find { it.id == debtId } ?: return
+        _debts.value = _debts.value.filterNot { it.id == debtId }
+        recordDebtRepayment(debt, debt.amount, fullyRepaid = true)
+    }
+
+    private fun recordDebtRepayment(debt: Debt, amount: Double, fullyRepaid: Boolean) {
+        val roundedAmount = Math.round(amount * 100.0) / 100.0
+        if (roundedAmount <= 0.0) {
+            saveToPrefs()
+            return
+        }
+
+        val lang = _selectedLanguage.value ?: AppLanguage.RU
+        val reasonKey = when {
+            debt.type == DebtType.OWED_TO_ME && fullyRepaid -> "debtFullRepaymentOwedToMe"
+            debt.type == DebtType.OWED_TO_ME -> "debtPartialRepaymentOwedToMe"
+            fullyRepaid -> "debtFullRepaymentIOwe"
+            else -> "debtPartialRepaymentIOwe"
+        }
+        val balanceChange = if (debt.type == DebtType.OWED_TO_ME) roundedAmount else -roundedAmount
+        addTransaction(
+            amount = balanceChange,
+            reason = LanguageHelper.getString(reasonKey, lang).replace("{name}", debt.name),
+            kind = "debt",
+            debtId = debt.id,
+            debtAction = if (fullyRepaid) "full_repayment" else "partial_repayment",
+            debtName = debt.name,
+            debtType = debt.type,
+            debtAmountBefore = debt.amount,
+            debtTimestamp = debt.timestamp
+        )
     }
 
     fun deleteDebt(debtId: String) {
-        _debts.value = _debts.value.filter { it.id != debtId }
+        _debts.value = _debts.value.filterNot { it.id == debtId }
         saveToPrefs()
     }
 
@@ -1164,8 +1314,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                                 val timestamp = (map["timestamp"] as? Number)?.toLong() ?: return@mapNotNull null
                                 val reason = map["reason"] as? String ?: return@mapNotNull null
                                 val amount = (map["amount"] as? Number)?.toDouble() ?: return@mapNotNull null
-                                val category = map["category"] as? String
-                                Transaction(id, timestamp, reason, amount, category)
+                                val category = (map["category"] as? String)?.takeIf { it.isNotEmpty() }
+                                val kind = (map["kind"] as? String)?.takeIf { it.isNotEmpty() }
+                                val debtId = (map["debtId"] as? String)?.takeIf { it.isNotEmpty() }
+                                val debtAction = (map["debtAction"] as? String)?.takeIf { it.isNotEmpty() }
+                                val debtName = (map["debtName"] as? String)?.takeIf { it.isNotEmpty() }
+                                val debtType = (map["debtType"] as? String)?.let { value ->
+                                    runCatching { DebtType.valueOf(value) }.getOrNull()
+                                }
+                                val debtAmountBefore = (map["debtAmountBefore"] as? Number)?.toDouble()
+                                val debtTimestamp = (map["debtTimestamp"] as? Number)?.toLong()
+                                Transaction(
+                                    id, timestamp, reason, amount, category, kind, debtId, debtAction,
+                                    debtName, debtType, debtAmountBefore, debtTimestamp
+                                )
                             }
                         }
                         
@@ -1236,7 +1398,14 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                         "timestamp" to tx.timestamp,
                         "reason" to tx.reason,
                         "amount" to tx.amount,
-                        "category" to (tx.category ?: "")
+                        "category" to (tx.category ?: ""),
+                        "kind" to (tx.kind ?: ""),
+                        "debtId" to (tx.debtId ?: ""),
+                        "debtAction" to (tx.debtAction ?: ""),
+                        "debtName" to (tx.debtName ?: ""),
+                        "debtType" to (tx.debtType?.name ?: ""),
+                        "debtAmountBefore" to (tx.debtAmountBefore ?: 0.0),
+                        "debtTimestamp" to (tx.debtTimestamp ?: 0L)
                     )
                 }
             )
