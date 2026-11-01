@@ -864,7 +864,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     fun recountAfterNegativeBalanceWarning() {
         pendingNegativeBalanceAction = null
         _showNegativeBalanceWarning.value = false
-        showSheet(SheetType.COUNT_MONEY)
+        _currentSheet.value = SheetType.COUNT_MONEY
     }
 
     fun addTransaction(

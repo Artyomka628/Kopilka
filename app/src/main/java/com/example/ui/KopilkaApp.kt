@@ -312,7 +312,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                 )
             }
             
-            if (showNegativeBalanceWarning && !showOnboarding) {
+            if (showNegativeBalanceWarning) {
                 Dialog(
                     onDismissRequest = {},
                     properties = DialogProperties(
