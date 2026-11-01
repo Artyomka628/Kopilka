@@ -200,6 +200,12 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val _showTestBuildDialog = MutableStateFlow(false)
     val showTestBuildDialog: StateFlow<Boolean> = _showTestBuildDialog.asStateFlow()
 
+    private val _showNegativeBalanceWarning = MutableStateFlow(false)
+    val showNegativeBalanceWarning: StateFlow<Boolean> = _showNegativeBalanceWarning.asStateFlow()
+
+    private var pendingNegativeBalanceAction: (() -> Unit)? = null
+    private var negativeBalanceWarningSuppressed = false
+
     private val _showOnboarding = MutableStateFlow(false)
     val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
 
@@ -212,12 +218,12 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     private val onboardingBackupKey = "interactive_onboarding_backup"
     private val onboardingSnapshotKeys = listOf(
         "balance", "goal", "transactions_json", "debts_json",
-        "unsynced_tx_ids", "deleted_tx_ids",
+        "unsynced_tx_ids", "deleted_tx_ids", "negative_balance_warning_suppressed",
         "custom_currency_enabled", "custom_currency_symbol", "goal_progress_hidden",
         "stats_reset_frequency", "last_reset_timestamp", "selected_language",
         "current_theme", "custom_theme_color", "launcher_icon_option"
     )
-    private val onboardingBooleanKeys = setOf("custom_currency_enabled", "goal_progress_hidden")
+    private val onboardingBooleanKeys = setOf("custom_currency_enabled", "goal_progress_hidden", "negative_balance_warning_suppressed")
     private val onboardingFloatKeys = setOf("balance", "goal")
     private val onboardingLongKeys = setOf("last_reset_timestamp", "custom_theme_color")
     private val onboardingSetKeys = setOf("unsynced_tx_ids", "deleted_tx_ids")
@@ -359,6 +365,11 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private fun loadFromPrefs() {
         _balance.value = prefs.getFloat("balance", 0f).toDouble()
+        negativeBalanceWarningSuppressed = prefs.getBoolean("negative_balance_warning_suppressed", false)
+        if (_balance.value > 0.0) {
+            negativeBalanceWarningSuppressed = false
+            prefs.edit().putBoolean("negative_balance_warning_suppressed", false).apply()
+        }
         _goal.value = prefs.getFloat("goal", 0f).toDouble()
         _customCurrencyEnabled.value = prefs.getBoolean("custom_currency_enabled", false)
         _customCurrencySymbol.value = prefs.getString("custom_currency_symbol", "") ?: ""
@@ -451,6 +462,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             ) / 100.0
             _unsyncedTxIds.value = _unsyncedTxIds.value + migrationTransactions.map { it.id }
         }
+        refreshNegativeBalanceWarningSuppression()
         saveToPrefs(debtsMigrationComplete = true)
     }
 
@@ -460,6 +472,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                 putBoolean("debts_accounting_migrated_v1", debtsMigrationComplete)
             }
             putFloat("balance", _balance.value.toFloat())
+            putBoolean("negative_balance_warning_suppressed", negativeBalanceWarningSuppressed)
             putFloat("goal", _goal.value.toFloat())
             putBoolean("custom_currency_enabled", _customCurrencyEnabled.value)
             putString("custom_currency_symbol", _customCurrencySymbol.value)
@@ -685,16 +698,20 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             val reasonStr = LanguageHelper.getString("recalculationReason", lang)
                 .replace("{change}", changeStr)
             if (_transactions.value.isEmpty()) {
-                _balance.value = roundedAmount
-                saveToPrefs()
-                if (FirebaseManager.isUserSignedIn()) {
-                    syncData()
+                runWithNegativeBalanceCheck(diff) {
+                    _balance.value = roundedAmount
+                    refreshNegativeBalanceWarningSuppression()
+                    saveToPrefs()
+                    if (FirebaseManager.isUserSignedIn()) {
+                        syncData()
+                    }
                 }
             } else {
                 addTransaction(diff, reasonStr)
             }
         } else {
             _balance.value = roundedAmount
+            refreshNegativeBalanceWarningSuppression()
             saveToPrefs()
             if (FirebaseManager.isUserSignedIn()) {
                 syncData()
@@ -755,25 +772,26 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         }
         val isLast = currentList.firstOrNull()?.id == txId
 
-        _transactions.value = currentList.filter { it.id != txId }
-        undoDebtTransaction(targetTx)
+        runWithNegativeBalanceCheck(-targetTx.amount) {
+            _transactions.value = currentList.filter { it.id != txId }
+            undoDebtTransaction(targetTx)
+            _deletedTxIds.value = _deletedTxIds.value + txId
+            _unsyncedTxIds.value = _unsyncedTxIds.value + txId
 
-        _deletedTxIds.value = _deletedTxIds.value + txId
-        _unsyncedTxIds.value = _unsyncedTxIds.value + txId
-
-        val lang = _selectedLanguage.value ?: AppLanguage.RU
-        val changeStr = formatChange(-targetTx.amount)
-        
-        if (isLast) {
-            _balance.value = Math.round((_balance.value - targetTx.amount) * 100.0) / 100.0
-            saveToPrefs()
-            if (FirebaseManager.isUserSignedIn()) {
-                syncData()
+            val lang = _selectedLanguage.value ?: AppLanguage.RU
+            val changeStr = formatChange(-targetTx.amount)
+            if (isLast) {
+                _balance.value = Math.round((_balance.value - targetTx.amount) * 100.0) / 100.0
+                refreshNegativeBalanceWarningSuppression()
+                saveToPrefs()
+                if (FirebaseManager.isUserSignedIn()) {
+                    syncData()
+                }
+            } else {
+                val reasonStr = LanguageHelper.getString("cancelEarlierOperationReason", lang)
+                    .replace("{change}", changeStr)
+                addTransaction(-targetTx.amount, reasonStr)
             }
-        } else {
-            val reasonStr = LanguageHelper.getString("cancelEarlierOperationReason", lang)
-                .replace("{change}", changeStr)
-            addTransaction(-targetTx.amount, reasonStr)
         }
     }
 
@@ -816,6 +834,39 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         return "$sign$value"
     }
 
+    private fun runWithNegativeBalanceCheck(amount: Double, action: () -> Unit) {
+        val currentBalance = Math.round(_balance.value * 100.0) / 100.0
+        val projectedBalance = Math.round((currentBalance + amount) * 100.0) / 100.0
+        if (currentBalance >= 0.0 && projectedBalance < 0.0 && !negativeBalanceWarningSuppressed) {
+            pendingNegativeBalanceAction = action
+            _showNegativeBalanceWarning.value = true
+        } else {
+            action()
+        }
+    }
+
+    private fun refreshNegativeBalanceWarningSuppression() {
+        if (_balance.value > 0.0 && negativeBalanceWarningSuppressed) {
+            negativeBalanceWarningSuppressed = false
+            prefs.edit().putBoolean("negative_balance_warning_suppressed", false).apply()
+        }
+    }
+
+    fun continueWithNegativeBalance() {
+        negativeBalanceWarningSuppressed = true
+        prefs.edit().putBoolean("negative_balance_warning_suppressed", true).apply()
+        val action = pendingNegativeBalanceAction
+        pendingNegativeBalanceAction = null
+        _showNegativeBalanceWarning.value = false
+        action?.invoke()
+    }
+
+    fun recountAfterNegativeBalanceWarning() {
+        pendingNegativeBalanceAction = null
+        _showNegativeBalanceWarning.value = false
+        showSheet(SheetType.COUNT_MONEY)
+    }
+
     fun addTransaction(
         amount: Double,
         reason: String,
@@ -826,45 +877,48 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         debtName: String? = null,
         debtType: DebtType? = null,
         debtAmountBefore: Double? = null,
-        debtTimestamp: Long? = null
+        debtTimestamp: Long? = null,
+        afterApplied: (() -> Unit)? = null
     ) {
         val roundedAmount = Math.round(amount * 100.0) / 100.0
-        val newTx = Transaction(
-            id = UUID.randomUUID().toString(),
-            timestamp = System.currentTimeMillis(),
-            reason = reason.trim().ifEmpty { 
-                if (_selectedLanguage.value == AppLanguage.RU) "Без описания" else "No description"
-            },
-            amount = roundedAmount,
-            category = category,
-            kind = kind,
-            debtId = debtId,
-            debtAction = debtAction,
-            debtName = debtName,
-            debtType = debtType,
-            debtAmountBefore = debtAmountBefore,
-            debtTimestamp = debtTimestamp
-        )
-        val updatedList = listOf(newTx) + _transactions.value // Prepend to list to display newest first
-        _transactions.value = updatedList
-        _balance.value = Math.round((_balance.value + roundedAmount) * 100.0) / 100.0
-        _unsyncedTxIds.value = _unsyncedTxIds.value + newTx.id
-        saveToPrefs()
+        runWithNegativeBalanceCheck(roundedAmount) {
+            val newTx = Transaction(
+                id = UUID.randomUUID().toString(),
+                timestamp = System.currentTimeMillis(),
+                reason = reason.trim().ifEmpty {
+                    if (_selectedLanguage.value == AppLanguage.RU) "Без описания" else "No description"
+                },
+                amount = roundedAmount,
+                category = category,
+                kind = kind,
+                debtId = debtId,
+                debtAction = debtAction,
+                debtName = debtName,
+                debtType = debtType,
+                debtAmountBefore = debtAmountBefore,
+                debtTimestamp = debtTimestamp
+            )
+            _transactions.value = listOf(newTx) + _transactions.value
+            _balance.value = Math.round((_balance.value + roundedAmount) * 100.0) / 100.0
+            _unsyncedTxIds.value = _unsyncedTxIds.value + newTx.id
+            afterApplied?.invoke()
+            refreshNegativeBalanceWarningSuppression()
+            saveToPrefs()
 
-        if (_showOnboarding.value) {
-            when {
-                _onboardingStep.value == 1 && roundedAmount > 0.0 -> {
-                    _onboardingStep.value = 2
-                }
-                _onboardingStep.value == 2 && roundedAmount < 0.0 -> {
-                    // Let the user choose how to reach Debts instead of navigating automatically.
-                    _onboardingStep.value = 3
+            if (_showOnboarding.value) {
+                when {
+                    _onboardingStep.value == 1 && roundedAmount > 0.0 -> {
+                        _onboardingStep.value = 2
+                    }
+                    _onboardingStep.value == 2 && roundedAmount < 0.0 -> {
+                        _onboardingStep.value = 3
+                    }
                 }
             }
-        }
 
-        if (FirebaseManager.isUserSignedIn()) {
-            syncData()
+            if (FirebaseManager.isUserSignedIn()) {
+                syncData()
+            }
         }
     }
 
@@ -933,7 +987,6 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             type = type,
             timestamp = System.currentTimeMillis()
         )
-        _debts.value = listOf(newDebt) + _debts.value
 
         val lang = _selectedLanguage.value ?: AppLanguage.RU
         val reasonKey = if (type == DebtType.OWED_TO_ME) "debtLentReason" else "debtBorrowedReason"
@@ -946,20 +999,22 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             debtAction = "opened",
             debtName = newDebt.name,
             debtType = newDebt.type,
-            debtTimestamp = newDebt.timestamp
-        )
-
-        if (_showOnboarding.value) {
-            when {
-                _onboardingStep.value == 4 && type == DebtType.OWED_TO_ME -> {
-                    _onboardingStep.value = 5
-                }
-                _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
-                    _onboardingStep.value = 6
+            debtTimestamp = newDebt.timestamp,
+            afterApplied = {
+                _debts.value = listOf(newDebt) + _debts.value
+                if (_showOnboarding.value) {
+                    when {
+                        _onboardingStep.value == 4 && type == DebtType.OWED_TO_ME -> {
+                            _onboardingStep.value = 5
+                        }
+                        _onboardingStep.value == 5 && type == DebtType.I_OWE -> {
+                            _onboardingStep.value = 6
+                        }
+                    }
+                    _onboardingInteractionOpen.value = false
                 }
             }
-            _onboardingInteractionOpen.value = false
-        }
+        )
     }
 
     fun updateDebtAmount(debtId: String, newAmount: Double) {
@@ -982,21 +1037,29 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         }
 
         val repaidAmount = Math.round((debt.amount - roundedAmount) * 100.0) / 100.0
-        _debts.value = _debts.value.map {
-            if (it.id == debtId) it.copy(amount = roundedAmount) else it
+        recordDebtRepayment(debt, repaidAmount, fullyRepaid = false) {
+            _debts.value = _debts.value.map {
+                if (it.id == debtId) it.copy(amount = roundedAmount) else it
+            }
         }
-        recordDebtRepayment(debt, repaidAmount, fullyRepaid = false)
     }
 
     fun repayDebtFully(debtId: String) {
         val debt = _debts.value.find { it.id == debtId } ?: return
-        _debts.value = _debts.value.filterNot { it.id == debtId }
-        recordDebtRepayment(debt, debt.amount, fullyRepaid = true)
+        recordDebtRepayment(debt, debt.amount, fullyRepaid = true) {
+            _debts.value = _debts.value.filterNot { it.id == debtId }
+        }
     }
 
-    private fun recordDebtRepayment(debt: Debt, amount: Double, fullyRepaid: Boolean) {
+    private fun recordDebtRepayment(
+        debt: Debt,
+        amount: Double,
+        fullyRepaid: Boolean,
+        afterApplied: () -> Unit
+    ) {
         val roundedAmount = Math.round(amount * 100.0) / 100.0
         if (roundedAmount <= 0.0) {
+            afterApplied()
             saveToPrefs()
             return
         }
@@ -1018,7 +1081,8 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             debtName = debt.name,
             debtType = debt.type,
             debtAmountBefore = debt.amount,
-            debtTimestamp = debt.timestamp
+            debtTimestamp = debt.timestamp,
+            afterApplied = afterApplied
         )
     }
 
@@ -1032,24 +1096,43 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         val data = KopilkaData(
             balance = _balance.value,
             goal = _goal.value,
-            transactions = _transactions.value
+            transactions = _transactions.value,
+            debts = _debts.value
         )
         return dataAdapter.toJson(data)
     }
 
-    // Import state from JSON String
     fun importStateFromJsonString(json: String): Boolean {
         return try {
-            val imported = dataAdapter.fromJson(json)
-            if (imported != null) {
-                _balance.value = imported.balance
-                _goal.value = imported.goal
-                _transactions.value = imported.transactions
-                saveToPrefs()
-                true
+            val trimmedJson = json.trim()
+            if (trimmedJson.startsWith("[")) {
+                val importedTransactions = transactionsAdapter.fromJson(trimmedJson) ?: return false
+                _transactions.value = importedTransactions
+                _balance.value = Math.round(importedTransactions.sumOf { it.amount } * 100.0) / 100.0
             } else {
-                false
+                val jsonObject = org.json.JSONObject(trimmedJson)
+                val recognizedFields = listOf("balance", "goal", "transactions", "debts")
+                if (recognizedFields.none { jsonObject.has(it) }) return false
+
+                val imported = dataAdapter.fromJson(trimmedJson) ?: return false
+                if (jsonObject.has("balance")) {
+                    _balance.value = imported.balance
+                } else if (jsonObject.has("transactions")) {
+                    _balance.value = Math.round(imported.transactions.sumOf { it.amount } * 100.0) / 100.0
+                }
+                if (jsonObject.has("goal")) {
+                    _goal.value = imported.goal
+                }
+                if (jsonObject.has("transactions")) {
+                    _transactions.value = imported.transactions
+                }
+                if (jsonObject.has("debts")) {
+                    _debts.value = imported.debts
+                }
             }
+            refreshNegativeBalanceWarningSuppression()
+            saveToPrefs()
+            true
         } catch (e: Exception) {
             false
         }
@@ -1356,6 +1439,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
                         withContext(Dispatchers.Main) {
                             _transactions.value = mergedTxs
                             _balance.value = mergedBalance
+                            refreshNegativeBalanceWarningSuppression()
                             _goal.value = mergedGoal
                             _deletedTxIds.value = mergedDeleted
                             _unsyncedTxIds.value = emptySet()

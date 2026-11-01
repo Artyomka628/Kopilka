@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -16,7 +17,10 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.collect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -110,6 +114,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
 
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
     val showOnboarding by viewModel.showOnboarding.collectAsStateWithLifecycle()
+    val showNegativeBalanceWarning by viewModel.showNegativeBalanceWarning.collectAsStateWithLifecycle()
     val onboardingStep by viewModel.onboardingStep.collectAsStateWithLifecycle()
     val onboardingInteractionOpen by viewModel.onboardingInteractionOpen.collectAsStateWithLifecycle()
     var onboardingTarget by remember { mutableStateOf<Pair<Int, Float>?>(null) }
@@ -189,7 +194,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                         SettingsScreen(
                             viewModel = viewModel,
                             onSaveClick = {
-                                exportLauncher.launch("kopilka_history.json")
+                                exportLauncher.launch("kopilka_data.json")
                             },
                             onLoadClick = {
                                 importLauncher.launch(arrayOf("application/json"))
@@ -224,7 +229,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                         SheetType.LANGUAGE -> LanguageSheetContent(viewModel)
                         SheetType.SETTINGS -> SettingsSheetContent(viewModel, onSaveClick = {
                             viewModel.hideSheet()
-                            exportLauncher.launch("kopilka_history.json")
+                            exportLauncher.launch("kopilka_data.json")
                         }, onLoadClick = {
                             viewModel.hideSheet()
                             importLauncher.launch(arrayOf("application/json"))
@@ -305,6 +310,83 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     containerColor = ElegantCardBg,
                     shape = RoundedCornerShape(20.dp)
                 )
+            }
+            
+            if (showNegativeBalanceWarning && !showOnboarding) {
+                Dialog(
+                    onDismissRequest = {},
+                    properties = DialogProperties(
+                        dismissOnBackPress = false,
+                        dismissOnClickOutside = false,
+                        usePlatformDefaultWidth = false
+                    )
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = ElegantDarkBg
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 28.dp, vertical = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.weight(1f))
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                            Text(
+                                text = LanguageHelper.getString("negativeBalanceWarningTitle", lang),
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = ElegantTextPrimary,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = LanguageHelper.getString("negativeBalanceWarningText", lang),
+                                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 25.sp),
+                                color = ElegantTextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Button(
+                                onClick = { viewModel.recountAfterNegativeBalanceWarning() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Text(
+                                    text = LanguageHelper.getString("recountMoney", lang),
+                                    color = ElegantBtnText,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(
+                                onClick = { viewModel.continueWithNegativeBalance() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                border = BorderStroke(1.dp, Color(0xFFFF9800)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFFCC80)),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Text(
+                                    text = LanguageHelper.getString("continueAnyway", lang),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

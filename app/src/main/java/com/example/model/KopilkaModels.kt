@@ -20,9 +20,10 @@ data class Transaction(
 
 @JsonClass(generateAdapter = true)
 data class KopilkaData(
-    val balance: Double,
-    val goal: Double,
-    val transactions: List<Transaction>
+    val balance: Double = 0.0,
+    val goal: Double = 0.0,
+    val transactions: List<Transaction> = emptyList(),
+    val debts: List<Debt> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)
