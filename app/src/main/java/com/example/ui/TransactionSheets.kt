@@ -521,7 +521,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     } else {
                         viewModel.setBalance(amt)
                         viewModel.showToast(LanguageHelper.getString("success", lang))
-                        viewModel.returnToSettings()
+                        viewModel.closeCountMoneySheet()
                     }
                 },
                 modifier = Modifier
@@ -539,7 +539,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             }
 
             Button(
-                onClick = { viewModel.returnToSettings() },
+                onClick = { viewModel.closeCountMoneySheet() },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),

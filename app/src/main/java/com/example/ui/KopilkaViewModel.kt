@@ -205,6 +205,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
 
     private var pendingNegativeBalanceAction: (() -> Unit)? = null
     private var negativeBalanceWarningSuppressed = false
+    private var countMoneyReturnToSettings = true
 
     private val _showOnboarding = MutableStateFlow(false)
     val showOnboarding: StateFlow<Boolean> = _showOnboarding.asStateFlow()
@@ -666,6 +667,9 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
             }
             if (!allowed) return
         }
+        if (type == SheetType.COUNT_MONEY) {
+            countMoneyReturnToSettings = true
+        }
         _currentSheet.value = type
     }
 
@@ -676,6 +680,15 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
     fun returnToSettings() {
         hideSheet()
         if (!_showOnboarding.value) {
+            navigateTo(AppScreen.SETTINGS)
+        }
+    }
+
+    fun closeCountMoneySheet() {
+        val shouldReturnToSettings = countMoneyReturnToSettings
+        countMoneyReturnToSettings = true
+        hideSheet()
+        if (shouldReturnToSettings && !_showOnboarding.value) {
             navigateTo(AppScreen.SETTINGS)
         }
     }
@@ -861,9 +874,15 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         action?.invoke()
     }
 
+    fun cancelNegativeBalanceAction() {
+        pendingNegativeBalanceAction = null
+        _showNegativeBalanceWarning.value = false
+    }
+
     fun recountAfterNegativeBalanceWarning() {
         pendingNegativeBalanceAction = null
         _showNegativeBalanceWarning.value = false
+        countMoneyReturnToSettings = false
         _currentSheet.value = SheetType.COUNT_MONEY
     }
 

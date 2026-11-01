@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -19,8 +18,6 @@ import androidx.compose.runtime.*
 import kotlinx.coroutines.flow.collect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -312,56 +309,58 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                 )
             }
             
+
             if (showNegativeBalanceWarning) {
-                Dialog(
-                    onDismissRequest = {},
-                    properties = DialogProperties(
-                        dismissOnBackPress = false,
-                        dismissOnClickOutside = false,
-                        usePlatformDefaultWidth = false
-                    )
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = ElegantDarkBg
-                    ) {
+                AlertDialog(
+                    onDismissRequest = { viewModel.cancelNegativeBalanceAction() },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFF9800),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = LanguageHelper.getString("negativeBalanceWarningTitle", lang),
+                            color = ElegantTextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = LanguageHelper.getString("negativeBalanceWarningText", lang),
+                            color = ElegantTextSecondary,
+                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp),
+                            textAlign = TextAlign.Start
+                        )
+                    },
+                    confirmButton = {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 28.dp, vertical = 32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = Color(0xFFFF9800),
-                                modifier = Modifier.size(72.dp)
-                            )
-                            Spacer(modifier = Modifier.height(28.dp))
-                            Text(
-                                text = LanguageHelper.getString("negativeBalanceWarningTitle", lang),
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = ElegantTextPrimary,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = LanguageHelper.getString("negativeBalanceWarningText", lang),
-                                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 25.sp),
-                                color = ElegantTextSecondary,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = { viewModel.cancelNegativeBalanceAction() }
+                                ) {
+                                    Text(LanguageHelper.getString("cancel", lang))
+                                }
+                                OutlinedButton(
+                                    onClick = { viewModel.continueWithNegativeBalance() }
+                                ) {
+                                    Text(LanguageHelper.getString("continueAnyway", lang))
+                                }
+                            }
                             Button(
                                 onClick = { viewModel.recountAfterNegativeBalanceWarning() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
-                                shape = RoundedCornerShape(16.dp)
+                                colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender)
                             ) {
                                 Text(
                                     text = LanguageHelper.getString("recountMoney", lang),
@@ -369,24 +368,11 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            OutlinedButton(
-                                onClick = { viewModel.continueWithNegativeBalance() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                border = BorderStroke(1.dp, Color(0xFFFF9800)),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFFCC80)),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Text(
-                                    text = LanguageHelper.getString("continueAnyway", lang),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
                         }
-                    }
-                }
+                    },
+                    containerColor = ElegantCardBg,
+                    shape = RoundedCornerShape(20.dp)
+                )
             }
         }
     }
