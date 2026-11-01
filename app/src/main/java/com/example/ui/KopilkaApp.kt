@@ -343,30 +343,25 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                             horizontalAlignment = Alignment.End,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(
-                                    onClick = { viewModel.cancelNegativeBalanceAction() }
-                                ) {
-                                    Text(LanguageHelper.getString("cancel", lang))
-                                }
-                                OutlinedButton(
-                                    onClick = { viewModel.continueWithNegativeBalance() }
-                                ) {
-                                    Text(LanguageHelper.getString("continueAnyway", lang))
-                                }
-                            }
                             Button(
-                                onClick = { viewModel.recountAfterNegativeBalanceWarning() },
+                                onClick = { viewModel.continueWithNegativeBalance() },
                                 colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender)
                             ) {
                                 Text(
-                                    text = LanguageHelper.getString("recountMoney", lang),
+                                    text = LanguageHelper.getString("continueAnyway", lang),
                                     color = ElegantBtnText,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                            OutlinedButton(
+                                onClick = { viewModel.recountAfterNegativeBalanceWarning() }
+                            ) {
+                                Text(LanguageHelper.getString("recountMoney", lang))
+                            }
+                            TextButton(
+                                onClick = { viewModel.cancelNegativeBalanceAction() }
+                            ) {
+                                Text(LanguageHelper.getString("cancel", lang))
                             }
                         }
                     },
