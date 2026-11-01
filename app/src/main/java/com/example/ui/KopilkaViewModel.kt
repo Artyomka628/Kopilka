@@ -1220,7 +1220,7 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         val income = subList.filter { it.amount > 0 }.sumOf { it.amount }
         val expense = subList.filter { it.amount < 0 }.sumOf { it.amount }
         
-        val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
+        val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", lang.toLocale())
         val dateStr = sdf.format(java.util.Date(currentTime))
         
         val title = LanguageHelper.getString("statisticsTitleForDate", lang)

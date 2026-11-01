@@ -560,7 +560,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
 @Composable
 fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = Color(0xFF1C1B1F)
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val currentVersion = com.example.BuildConfig.VERSION_NAME

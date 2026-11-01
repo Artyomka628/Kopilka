@@ -1,6 +1,7 @@
 package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 // Elegant Dark Palette colors matching design spec
 val ElegantDarkBg = Color(0xFF2A292F)       // Main grey-charcoal background
@@ -26,3 +27,11 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+
+fun themeContentColor(backgroundColor: Color): Color {
+    return if (backgroundColor.luminance() > 0.179f) {
+        Color(0xFF1C1B1F)
+    } else {
+        Color.White
+    }
+}

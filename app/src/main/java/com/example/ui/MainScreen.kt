@@ -167,8 +167,8 @@ fun MainScreen(
                     color = ElegantTextPrimary
                 )
             )
-            val currentDateStr = remember {
-                val sdf = SimpleDateFormat("d MMM, yyyy", Locale.getDefault())
+            val currentDateStr = remember(lang) {
+                val sdf = SimpleDateFormat("d MMM, yyyy", lang.toLocale())
                 sdf.format(Date())
             }
             Text(
@@ -201,7 +201,7 @@ fun MainScreen(
                     )
                 }
             } else {
-                val sdf = remember { SimpleDateFormat("d MMMM yyyy", Locale.getDefault()) }
+                val sdf = remember(lang) { SimpleDateFormat("d MMMM yyyy", lang.toLocale()) }
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -233,7 +233,7 @@ fun HeaderRow(
     onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
 ) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = Color(0xFF1C1B1F)
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
 
     val unsyncedTxIds by viewModel.unsyncedTxIds.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
@@ -872,6 +872,7 @@ fun BottomControlsRow(
     onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
 ) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
 
     Column(
         modifier = Modifier
@@ -957,20 +958,20 @@ fun BottomControlsRow(
                         onTutorialTarget(3, it.boundsInRoot().center.y)
                     }
                 },
-            colors = ButtonDefaults.buttonColors(containerColor = ColorSettings),
+            colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.AccountBalanceWallet,
                 contentDescription = null,
-                tint = Color(0xFF1C1B1F),
+                tint = ElegantBtnText,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = LanguageHelper.getString("btnDebts", lang),
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = Color(0xFF1C1B1F),
+                    color = ElegantBtnText,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

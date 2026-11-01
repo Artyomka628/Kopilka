@@ -58,7 +58,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
     val selectedLanguage by viewModel.selectedLanguage.collectAsStateWithLifecycle()
 
     val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = Color(0xFF1C1B1F) // beautiful dark charcoal contrast color for primary buttons
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
 
     val lang = selectedLanguage ?: AppLanguage.RU // Default to RU for UI text until set
     val preventInitialLanguageDismissal by rememberUpdatedState(
@@ -324,7 +324,7 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
                     title = {
                         Text(
                             text = LanguageHelper.getString("negativeBalanceWarningTitle", lang),
-                            color = ElegantTextPrimary,
+                            color = ElegantLavender,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )

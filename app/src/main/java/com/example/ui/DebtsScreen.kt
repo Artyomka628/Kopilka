@@ -59,7 +59,7 @@ fun DebtsScreen(
     val displaySymbol = if (customEnabled && customSymbol.isNotEmpty()) customSymbol else "$"
 
     val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = Color(0xFF1C1B1F)
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
 
     var showAddSheet by remember { mutableStateOf(false) }
     var addDebtType by remember { mutableStateOf(DebtType.OWED_TO_ME) }
@@ -355,7 +355,7 @@ fun DebtsScreen(
                         )
                     }
                 } else {
-                    val sdf = remember { SimpleDateFormat("d MMMM yyyy", Locale.getDefault()) }
+                    val sdf = remember(lang) { SimpleDateFormat("d MMMM yyyy", lang.toLocale()) }
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(10.dp)

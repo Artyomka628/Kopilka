@@ -45,7 +45,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ElegantCardBg
-import com.example.ui.theme.ElegantLavender
 import com.example.ui.theme.ElegantTextPrimary
 import com.example.ui.theme.ElegantTextSecondary
 import kotlin.math.roundToInt
@@ -211,14 +210,14 @@ fun OnboardingDialog(
                             if (finalStep) onFinish() else onContinue()
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Text(
                             text = strings(
                                 if (step == 0) "onboardingTourStart" else "onboardingTourFinish"
                             ),
-                            color = Color(0xFF1C1B1F),
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
                     }

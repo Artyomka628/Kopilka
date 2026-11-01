@@ -143,7 +143,7 @@ fun SettingsSheetContent(
     isFullScreen: Boolean = false
 ) {
     val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = Color(0xFF1C1B1F)
+    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
 
     Column(
         modifier = Modifier
@@ -1049,7 +1049,7 @@ fun SettingsSheetContent(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(currentTheme.primaryColor),
+                            .background(ElegantLavender),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -1061,7 +1061,7 @@ fun SettingsSheetContent(
                         ) {
                             Text(
                                 text = "$",
-                                color = currentTheme.primaryColor,
+                                color = ElegantLavender,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 style = androidx.compose.ui.text.TextStyle(
@@ -1088,14 +1088,14 @@ fun SettingsSheetContent(
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ElegantLavender,
-                    contentColor = Color.Black
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(

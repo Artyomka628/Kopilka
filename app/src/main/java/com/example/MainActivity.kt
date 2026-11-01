@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.example.ui.KopilkaApp
 import com.example.ui.KopilkaViewModel
+import com.example.ui.rememberPrimaryColor
 import com.example.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,10 +17,10 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      MyApplicationTheme {
+      val primaryColor = rememberPrimaryColor(viewModel)
+      MyApplicationTheme(primaryColor = primaryColor) {
         KopilkaApp(viewModel = viewModel)
       }
     }
   }
 }
-
