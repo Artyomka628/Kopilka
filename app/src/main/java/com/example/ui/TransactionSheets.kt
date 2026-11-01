@@ -431,7 +431,7 @@ fun SetGoalSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     } else {
                         viewModel.setGoal(amt)
                         viewModel.showToast(LanguageHelper.getString("success", lang))
-                        viewModel.showSheet(SheetType.SETTINGS)
+                        viewModel.returnToSettings()
                     }
                 },
                 modifier = Modifier
@@ -449,7 +449,7 @@ fun SetGoalSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             }
 
             Button(
-                onClick = { viewModel.showSheet(SheetType.SETTINGS) },
+                onClick = { viewModel.returnToSettings() },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
@@ -521,7 +521,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
                     } else {
                         viewModel.setBalance(amt)
                         viewModel.showToast(LanguageHelper.getString("success", lang))
-                        viewModel.showSheet(SheetType.SETTINGS)
+                        viewModel.returnToSettings()
                     }
                 },
                 modifier = Modifier
@@ -539,7 +539,7 @@ fun CountMoneySheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             }
 
             Button(
-                onClick = { viewModel.showSheet(SheetType.SETTINGS) },
+                onClick = { viewModel.returnToSettings() },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
@@ -860,7 +860,7 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
         }
 
         Button(
-            onClick = { viewModel.showSheet(SheetType.SETTINGS) },
+            onClick = { viewModel.returnToSettings() },
             modifier = Modifier
                 .fillMaxWidth(0.5f)
                 .padding(bottom = 16.dp)

@@ -60,6 +60,9 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
     val ElegantBtnText = Color(0xFF1C1B1F) // beautiful dark charcoal contrast color for primary buttons
 
     val lang = selectedLanguage ?: AppLanguage.RU // Default to RU for UI text until set
+    val preventInitialLanguageDismissal by rememberUpdatedState(
+        currentSheet == SheetType.LANGUAGE && selectedLanguage == null
+    )
 
     // Show toast messages
     LaunchedEffect(toastMessage) {
@@ -202,8 +205,17 @@ fun KopilkaApp(viewModel: KopilkaViewModel) {
             // Bottom Sheet Modal (Standard Material 3 styled elegantly)
             if (currentSheet != null) {
                 ModalBottomSheet(
-                    onDismissRequest = { viewModel.hideSheet() },
-                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    onDismissRequest = {
+                        if (!preventInitialLanguageDismissal) {
+                            viewModel.hideSheet()
+                        }
+                    },
+                    sheetState = rememberModalBottomSheetState(
+                        skipPartiallyExpanded = true,
+                        confirmValueChange = { targetValue ->
+                            !preventInitialLanguageDismissal || targetValue != SheetValue.Hidden
+                        }
+                    ),
                     containerColor = ElegantCardBg,
                     contentColor = ElegantTextPrimary,
                     dragHandle = { BottomSheetDefaults.DragHandle(color = ElegantTextSecondary) }

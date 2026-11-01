@@ -660,6 +660,13 @@ class KopilkaViewModel(application: Application) : AndroidViewModel(application)
         _currentSheet.value = null
     }
 
+    fun returnToSettings() {
+        hideSheet()
+        if (!_showOnboarding.value) {
+            navigateTo(AppScreen.SETTINGS)
+        }
+    }
+
     fun setGoal(amount: Double) {
         _goal.value = Math.round(amount * 100.0) / 100.0
         saveToPrefs()
