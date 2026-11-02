@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
@@ -563,6 +564,7 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
     val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val currentVersion = com.example.BuildConfig.VERSION_NAME
 
     LaunchedEffect(Unit) {
@@ -595,6 +597,18 @@ fun AboutAppSheetContent(viewModel: KopilkaViewModel, lang: AppLanguage) {
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(vertical = 4.dp)
+        )
+
+        Text(
+            text = "github.com/Artyomka628",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = ElegantLavender,
+                fontWeight = FontWeight.SemiBold
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { uriHandler.openUri("https://github.com/Artyomka628") }
         )
 
         Text(

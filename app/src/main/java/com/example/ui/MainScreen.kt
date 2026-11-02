@@ -871,9 +871,6 @@ fun BottomControlsRow(
     tutorialStep: Int = 0,
     onTutorialTarget: (Int, Float) -> Unit = { _, _ -> }
 ) {
-    val ElegantLavender = rememberPrimaryColor(viewModel)
-    val ElegantBtnText = MaterialTheme.colorScheme.onPrimary
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -958,20 +955,20 @@ fun BottomControlsRow(
                         onTutorialTarget(3, it.boundsInRoot().center.y)
                     }
                 },
-            colors = ButtonDefaults.buttonColors(containerColor = ElegantLavender),
+            colors = ButtonDefaults.buttonColors(containerColor = Purple80),
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.AccountBalanceWallet,
                 contentDescription = null,
-                tint = ElegantBtnText,
+                tint = Color(0xFF1C1B1F),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = LanguageHelper.getString("btnDebts", lang),
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = ElegantBtnText,
+                    color = Color(0xFF1C1B1F),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

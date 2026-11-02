@@ -4,7 +4,6 @@ internal object RussianStrings {
     val values = mapOf(
         "languageTitle" to "Language/Язык",
         "languageSub" to "Choose your language\nВыберите язык",
-        "languageNote" to "Note: The date language is determined by the language on the device.\nВажно: Дата будет отображаться на языке устройства.",
         "btnEnglish" to "English",
         "btnRussian" to "Русский",
         "btnSettings" to "Настройки",
@@ -29,7 +28,7 @@ internal object RussianStrings {
         "amount" to "Сумма",
         "reason" to "Описание",
         "aboutAppTitle" to "О приложении Копилка",
-        "aboutAppText" to "Копилка — это простой помощник по ведению бюджета для отслеживания доходов и расхода.\n\nСоздано Artyomka628 - github.com/artyomka628",
+        "aboutAppText" to "Копилка — это простой помощник по ведению бюджета для отслеживания доходов и расхода.\n\nСоздано Artyomka628",
         "inputGoal" to "Сумма цели",
         "inputInitial" to "Текущий баланс",
         "invalidAmount" to "Пожалуйста, введите корректное число",

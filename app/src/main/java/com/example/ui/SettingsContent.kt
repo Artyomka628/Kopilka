@@ -71,18 +71,6 @@ fun LanguageSheetContent(viewModel: KopilkaViewModel) {
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = LanguageHelper.getString("languageNote", lang),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = ElegantTextSecondary.copy(alpha = 0.7f),
-                fontSize = 13.sp,
-                lineHeight = 18.sp
-            ),
-            textAlign = TextAlign.Center
-        )
-
         Spacer(modifier = Modifier.height(28.dp))
 
         Row(
